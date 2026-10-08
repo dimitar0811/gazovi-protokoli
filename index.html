@@ -581,6 +581,23 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 
 
 
+<div id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <h2 id="authTitle">Вход в приложението</h2>
+    <p id="authSubtitle">Вход в приложението</p>
+    <input id="authEmail" type="email" placeholder="Имейл">
+    <input id="authPassword" type="password" placeholder="Парола">
+    <input id="authPassword2" type="password" placeholder="Потвърди паролата" style="display:none">
+    <button id="authMainBtn" onclick="authMain()">Вход</button>
+    <button id="authToggleBtn" onclick="toggleAuthMode()">Регистрация</button>
+    <button onclick="continueOffline()">Работа без вход (офлайн)</button>
+    <div id="authMsg"></div>
+  </div>
+</div>
+<div id="userBar" class="user-bar" style="display:none">
+  <span id="userEmail"></span>
+  <button onclick="logout()">Изход</button>
+</div>
 <main>
 <div class="sheet" id="sheet">
 <div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span style="display:inline-flex;align-items:center;gap:4px"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"></span></small></div>
