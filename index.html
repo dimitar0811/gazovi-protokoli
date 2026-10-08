@@ -653,23 +653,76 @@ async function authMain(){
     }
   }catch(e){authMessage(e.message||'Грешка при вход.');}
 }
-async function onSignedIn(user){currentUser=user;$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent=user.email||'';await loadCloud();}
-async function logout(){await sb.auth.signOut();currentUser=null;$('userBar').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
+let currentCompanyId=localStorage.getItem('gasCompanyId')||'';
+const COMPANY_NAME='ПРОТОКОЛИ ЗАСИЧАНИЯ';
+async function ensureCompany(){
+  if(!currentUser)return false;
+  if(currentCompanyId){
+    const {data,error}=await sb.from('protocols').select('id').eq('company_id',currentCompanyId).limit(1);
+    if(!error){localStorage.setItem('gasCompanyId',currentCompanyId);return true;}
+    currentCompanyId='';localStorage.removeItem('gasCompanyId');
+  }
+  const code=(window.prompt('Фирмен код за общия архив:',localStorage.getItem('gasCompanyCode')||'ЧЕП2026')||'').trim();
+  if(!code)return false;
+  const {data,error}=await sb.rpc('join_company_by_code',{p_code:code,p_user_id:currentUser.id});
+  if(error){authMessage(error.message||'Невалиден фирмен код.');return false;}
+  currentCompanyId=data;
+  localStorage.setItem('gasCompanyId',data);
+  localStorage.setItem('gasCompanyCode',code);
+  return true;
+}
+async function onSignedIn(user){
+  currentUser=user;
+  $('authGate').style.display='none';
+  $('userBar').style.display='flex';
+  $('userEmail').textContent=user.email||'';
+  if(await ensureCompany()) await loadCloud();
+  else {$('authGate').style.display='flex';authMessage('Въведете фирмения код, за да използвате общия архив.');}
+}
+async function logout(){await sb.auth.signOut();currentUser=null;currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 function continueOffline(){$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent='Офлайн режим';}
 async function loadCloud(){
-  if(!currentUser)return;
-  const {data,error}=await sb.from('protocols').select('*').eq('user_id',currentUser.id).order('saved_at',{ascending:false});
-  if(error){console.warn('Cloud archive unavailable',error);return;}
-  const arr=(data||[]).map(cloudToLocal);localStorage.setItem('gasProtocolArchive',JSON.stringify(arr));
+  if(!currentUser||!currentCompanyId)return;
+  const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).order('saved_at',{ascending:false});
+  if(error){
+    console.warn('Company archive unavailable',error);
+    currentCompanyId='';localStorage.removeItem('gasCompanyId');
+    $('authGate').style.display='flex';
+    authMessage('Няма достъп до фирмения архив. Въведете фирмения код отново.');
+    return;
+  }
+  const arr=(data||[]).map(cloudToLocal);
+  localStorage.setItem('gasProtocolArchive',JSON.stringify(arr));
   if(arr[0]){localStorage.setItem('gasProtocolV2',JSON.stringify(arr[0]));load();}
 }
-function cloudToLocal(x){const d={...x};d.pno=x.pno||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';d.techName=x.tech_name||'';d.clientName=x.client_name||'';d.savedAt=x.saved_at?new Date(x.saved_at).getTime():Date.now();return d}
-async function saveCloud(d){
-  if(!currentUser)return true;
-  const row={user_id:currentUser.id,pno:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:d.notes,tech_name:d.techName,client_name:d.clientName,tech_sig:d.techSig,client_sig:d.clientSig,saved_at:new Date().toISOString()};
-  const {error}=await sb.from('protocols').upsert(row,{onConflict:'user_id,pno'});if(error){alert((lang==='bg'?'Локално е записано, но облачният запис не успя: ':'Saved locally, but cloud save failed: ')+error.message);return false}return true;
+function cloudToLocal(x){
+  const d={...x};
+  d.pno=x.pno||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';
+  d.techName=x.tech_name||'';d.clientName=x.client_name||'';
+  d.createdByEmail=x.created_by_email||'';d.updatedByEmail=x.updated_by_email||'';
+  d.savedAt=x.saved_at?new Date(x.saved_at).getTime():Date.now();
+  return d;
 }
-async function deleteCloud(d){if(!currentUser||!d?.pno)return;await sb.from('protocols').delete().eq('user_id',currentUser.id).eq('pno',d.pno)}
+async function saveCloud(d){
+  if(!currentUser||!currentCompanyId)return true;
+  const old=archiveData().find(x=>x.pno===d.pno);
+  const row={
+    user_id:old?.user_id||currentUser.id,
+    company_id:currentCompanyId,
+    created_by:old?.created_by||currentUser.id,
+    updated_by:currentUser.id,
+    created_by_email:old?.created_by_email||currentUser.email||'',
+    updated_by_email:currentUser.email||'',
+    pno:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,
+    cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:d.notes,
+    tech_name:d.techName,client_name:d.clientName,tech_sig:d.techSig,client_sig:d.clientSig,saved_at:new Date().toISOString()
+  };
+  const {error}=await sb.from('protocols').upsert(row,{onConflict:'company_id,pno'});
+  if(error){alert((lang==='bg'?'Локално е записано, но облачният запис не успя: ':'Saved locally, but cloud save failed: ')+error.message);return false}
+  d.created_by=row.created_by;d.updated_by=row.updated_by;d.createdByEmail=row.created_by_email;d.updatedByEmail=row.updated_by_email;
+  return true;
+}
+async function deleteCloud(d){if(!currentUser||!currentCompanyId||!d?.pno)return;await sb.from('protocols').delete().eq('company_id',currentCompanyId).eq('pno',d.pno)}
 
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
@@ -679,14 +732,26 @@ function prepareKeyboard(){}
 function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
-async function save(){if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);await saveCloud(d);alert(lang==='bg'?'Протоколът е записан и добавен в архива.':'Protocol saved and added to archive.')}
+async function save(){
+  if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
+  if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
+  if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);
+  let d=collect();d.savedAt=Date.now();
+  const old=archiveData().find(x=>x.pno===d.pno);
+  d.created_by=old?.created_by||currentUser?.id||'';
+  d.updated_by=currentUser?.id||'';
+  d.createdByEmail=old?.createdByEmail||currentUser?.email||'';
+  d.updatedByEmail=currentUser?.email||'';
+  localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);await saveCloud(d);
+  alert(lang==='bg'?'Протоколът е записан и добавен в общия архив.':'Protocol saved to the shared archive.');
+}
 function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
 function newProtocol(){if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;const client=$('client').value.trim();const a=archiveData();let last=null;if(client){last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];}ids.forEach(id=>$(id).value='');$('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';$('pno').value='';$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});if(last){$('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;}calc();window.scrollTo({top:0,behavior:'smooth'});}
 function printProtocol(){saveSilently();window.print();}
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
-function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length){box.innerHTML='<p>'+ (lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}box.innerHTML=a.map((d,i)=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')}
+function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length){box.innerHTML='<p>'+ (lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}box.innerHTML=a.map((d,i)=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
