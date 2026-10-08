@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gas Protocol / Газов протокол</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef3f7;color:#172536;font-family:Arial,sans-serif}
+header{background:#123b60;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;margin:0}.lang button{padding:6px 9px;border:0;border-radius:6px;background:#dce8f2;color:#123b60;font-weight:bold}
+main{max-width:1050px;margin:10px auto;padding:0 10px}.sheet{background:#fff;border:1px solid #ccd7e1;border-radius:10px;padding:12px}
+.title{text-align:center;border-bottom:2px solid #123b60;padding-bottom:7px;margin-bottom:8px}.title h2{font-size:17px;margin:0}.title small{color:#647689}
+.section{border:1px solid #d3dde6;border-radius:7px;padding:7px;margin:7px 0}.section h3{font-size:12px;margin:0 0 6px;color:#123b60}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.span2{grid-column:span 2}.span3{grid-column:span 3}.span4{grid-column:span 4}.span6{grid-column:span 6}
+label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:2px}input,textarea{width:100%;padding:6px;border:1px solid #bac8d5;border-radius:5px;font:inherit;font-size:12px}textarea{height:42px;resize:none}
+.calc{background:#e9f6ef;border-radius:5px;padding:7px;font-size:11px}.calc b{font-size:15px;color:#12683a}
+.footer{display:grid;grid-template-columns:1fr 1fr;gap:8px}.signature{border:1px dashed #aab8c5;border-radius:5px;min-height:65px;padding:5px;font-size:10px}.signature img{max-width:100%;height:48px;display:block}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}button{border:0;border-radius:6px;padding:8px 11px;background:#1769aa;color:#fff;font-weight:bold;cursor:pointer;font-size:12px}.secondary{background:#dce7f1;color:#17324d}
+#sigModal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:12px}.modal{background:#fff;border-radius:10px;padding:12px;width:min(500px,100%)}canvas{width:100%;height:190px;border:1px solid #bbc8d4;border-radius:6px;touch-action:none;background:white}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.span2,.span3,.span4,.span6{grid-column:span 2}}
+@media print{body{background:#fff}.no-print,header{display:none!important}main{margin:0;padding:0;max-width:none}.sheet{border:0;padding:4px}.section{margin:4px 0;padding:5px}.title{padding-bottom:4px}.footer{page-break-inside:avoid}@page{size:A4 portrait;margin:7mm}}
+.archive-modal{max-width:900px;max-height:85vh;overflow:auto}.archive-item{border:1px solid #ccc;border-radius:8px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.archive-meta{flex:1}.archive-actions{display:flex;gap:6px;flex-wrap:wrap}@media(max-width:600px){.archive-item{display:block}.archive-actions{margin-top:8px}}
+#archiveModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;align-items:center;justify-content:center;padding:15px}
+
+.auth-gate{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.auth-card{background:#fff;width:min(420px,100%);border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center}
+.auth-card h2{margin:0 0 6px}.auth-card p{margin:0 0 18px;color:#555}.auth-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:13px;border:1px solid #bbb;border-radius:8px;font-size:16px}.auth-card button{width:100%;margin-top:8px;padding:12px;border-radius:8px;font-size:16px}.auth-card #authMsg{min-height:24px;margin-top:12px;font-size:14px}.user-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:8px 12px;background:#f2f2f2;font-size:13px}.user-bar button{width:auto;margin:0;padding:6px 12px}
+</style>
+<style>.date-wrap{display:flex;align-items:center;gap:4px}.date-wrap input[type=text]{flex:1}.date-btn{padding:6px 8px;cursor:pointer}.date-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}</style><style>input,textarea,button{font-family:Arial,sans-serif}input:focus,textarea:focus{outline:2px solid #1769aa}</style></head>
+<body>
+<header><h1>Газови протоколи / Gas Protocols</h1><div class="lang"><button onclick="setLang('bg')">BG</button> <button onclick="setLang('en')">EN</button></div></header>
+
+<div id="authGate" class="auth-gate no-print">
+  <div class="auth-card">
+    <h2>Газови протоколи</h2>
+    <p id="authSubtitle">Вход в приложението</p>
+    <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="Имейл">
+    <input id="authPassword" type="password" autocomplete="current-password" placeholder="Парола">
+    <input id="authPassword2" type="password" autocomplete="new-password" placeholder="Повтори паролата" style="display:none">
+    <button id="authMainBtn" onclick="authMain()">Вход</button>
+    <button class="secondary" id="authToggleBtn" onclick="toggleAuthMode()">Регистрация</button>
+    <button class="secondary" id="authOfflineBtn" onclick="continueOffline()">Продължи офлайн</button>
+    <div id="authMsg"></div>
+  </div>
+</div>
+<div id="userBar" class="user-bar no-print" style="display:none">
+  <span id="userEmail"></span>
+  <button class="secondary" onclick="logout()">Изход</button>
+</div>
+<main>
+<div class="sheet" id="sheet">
+<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span style="display:inline-flex;align-items:center;gap:4px"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"><button type="button" class="no-print" title="Избери дата" onclick="openDatePicker()">📅</button><input id="datePicker" type="date" class="no-print" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" tabindex="-1"></span></small></div>
+
+<div class="section"><h3 data-bg="Клиент и обект" data-en="CLIENT AND SITE">Клиент и обект</h3><div class="grid">
+<div class="span2"><label data-bg="Клиент / фирма" data-en="Client / Company">Клиент / фирма</label><input id="client"></div>
+<div class="span2"><label data-bg="ЕИК / Булстат" data-en="Company ID">ЕИК / Булстат</label><input id="eik"></div>
+<div class="span2"><label data-bg="Представител на доставчика" data-en="Supplier representative">Представител на доставчика</label><input id="tech"></div>
+<div class="span4"><label data-bg="Обект / адрес" data-en="Site / Address">Обект / адрес</label><input id="site"></div>
+<div class="span2"><label data-bg="Телефон / имейл" data-en="Phone / Email">Телефон / имейл</label><input id="contact"></div>
+</div></div>
+
+<div class="section"><h3 data-bg="Коректор" data-en="CORRECTOR">Коректор</h3><div class="grid">
+<div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="cbm"></div>
+<div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="cs"></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="no-print date-btn" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="c1" type="number" step="any"></div>
+<div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="c2" type="number" step="any"></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="no-print date-btn" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+</div><div class="calc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">0.000 m³</b></div></div>
+
+<div class="section"><h3 data-bg="Разходомер" data-en="GAS METER">Разходомер</h3><div class="grid">
+<div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="mbm"></div>
+<div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="ms"></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="no-print date-btn" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
+<div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="no-print date-btn" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+</div><div class="calc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">0.000 m³</b></div></div>
+
+<div class="section"><h3 data-bg="Забележки / заключение" data-en="NOTES / CONCLUSION">Забележки / заключение</h3><textarea id="notes"></textarea></div>
+
+<div class="footer">
+<div class="signature"><b data-bg="Представител на доставчика" data-en="Supplier representative">Представител на доставчика</b><label data-bg="Име:" data-en="Name:">Име:</label><input id="techName" placeholder="" data-ph-bg="" data-ph-en=""><label data-bg="Подпис:" data-en="Signature:">Подпис:</label><div id="techSig"></div></div>
+<div class="signature"><b data-bg="Клиент / представител" data-en="Client / representative">Клиент / представител</b><label data-bg="Име:" data-en="Name:">Име:</label><input id="clientName" placeholder="" data-ph-bg="" data-ph-en=""><label data-bg="Подпис:" data-en="Signature:">Подпис:</label><div id="clientSig"></div></div>
+</div>
+</div>
+<div class="actions no-print">
+<button onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
+<button onclick="openSig('techSig')" data-bg="Подпис — представител на доставчика" data-en="Sign — supplier representative">Подпис — представител на доставчика</button>
+<button onclick="openSig('clientSig')" data-bg="Подпис — клиент и представител" data-en="Sign — client and representative">Подпис — клиент и представител</button>
+<button class="secondary" onclick="printProtocol()" data-bg="Печат / PDF" data-en="Print / PDF">Печат / PDF</button>
+<button class="secondary" onclick="shareProtocol()" data-bg="Изпрати като файл" data-en="Send as file">Изпрати като файл</button>
+<button class="secondary" onclick="newProtocol()" data-bg="Нов протокол" data-en="New protocol">Нов протокол</button>
+<button class="secondary" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
+</div>
+</main>
+
+<div id="archiveModal"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div id="archiveList"></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
+<div id="sigModal"><div class="modal"><h3 id="sigTitle">Подпис</h3><canvas id="canvas" width="900" height="340"></canvas><div class="actions"><button onclick="clearSig()">Изчисти</button><button onclick="saveSig()">Постави подпис</button><button class="secondary" onclick="closeSig()">Отказ</button></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const ids=['pno','date','client','techName','clientName','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes'];
+const $=id=>document.getElementById(id), num=id=>parseFloat($(id).value)||0;
+let sigTarget=null, lang='bg';
+
+const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
+const SUPABASE_KEY='sb_publishable_3GQGFoT5-Brr0YIbwO4V2g_rh8CvdVe';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let authMode='login', currentUser=null;
+function authMessage(msg,ok=false){$('authMsg').textContent=msg;$('authMsg').style.color=ok?'#167a35':'#b00020'}
+function toggleAuthMode(){authMode=authMode==='login'?'register':'login';$('authPassword2').style.display=authMode==='register'?'block':'none';$('authMainBtn').textContent=authMode==='register'?'Регистрация':'Вход';$('authToggleBtn').textContent=authMode==='register'?'Назад към вход':'Регистрация';$('authSubtitle').textContent=authMode==='register'?'Създаване на нов профил':'Вход в приложението';$('authMsg').textContent='';}
+async function authMain(){
+  const email=$('authEmail').value.trim(), password=$('authPassword').value;
+  if(!email||!password){authMessage('Въведете имейл и парола.');return}
+  if(authMode==='register' && password!==$('authPassword2').value){authMessage('Паролите не съвпадат.');return}
+  authMessage('Моля, изчакайте...',true);
+  try{
+    if(authMode==='register'){
+      const {data,error}=await sb.auth.signUp({email,password});
+      if(error) throw error;
+      if(data.session){authMessage('Регистрацията е успешна.',true);await onSignedIn(data.session.user)}
+      else authMessage('Регистрацията е създадена. Проверете имейла си за потвърждение.',true);
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email,password});
+      if(error) throw error; await onSignedIn(data.user);
+    }
+  }catch(e){authMessage(e.message||'Грешка при вход.');}
+}
+async function onSignedIn(user){currentUser=user;$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent=user.email||'';await loadCloud();}
+async function logout(){await sb.auth.signOut();currentUser=null;$('userBar').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
+function continueOffline(){$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent='Офлайн режим';}
+async function loadCloud(){
+  if(!currentUser)return;
+  const {data,error}=await sb.from('protocols').select('*').eq('user_id',currentUser.id).order('saved_at',{ascending:false});
+  if(error){console.warn('Cloud archive unavailable',error);return;}
+  const arr=(data||[]).map(cloudToLocal);localStorage.setItem('gasProtocolArchive',JSON.stringify(arr));
+  if(arr[0]){localStorage.setItem('gasProtocolV2',JSON.stringify(arr[0]));load();}
+}
+function cloudToLocal(x){const d={...x};d.pno=x.pno||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';d.techName=x.tech_name||'';d.clientName=x.client_name||'';d.savedAt=x.saved_at?new Date(x.saved_at).getTime():Date.now();return d}
+async function saveCloud(d){
+  if(!currentUser)return true;
+  const row={user_id:currentUser.id,pno:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:d.notes,tech_name:d.techName,client_name:d.clientName,tech_sig:d.techSig,client_sig:d.clientSig,saved_at:new Date().toISOString()};
+  const {error}=await sb.from('protocols').upsert(row,{onConflict:'user_id,pno'});if(error){alert((lang==='bg'?'Локално е записано, но облачният запис не успя: ':'Saved locally, but cloud save failed: ')+error.message);return false}return true;
+}
+async function deleteCloud(d){if(!currentUser||!d?.pno)return;await sb.from('protocols').delete().eq('user_id',currentUser.id).eq('pno',d.pno)}
+
+function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
+['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
+function setLang(x){lang=x;document.documentElement.lang=x;document.querySelectorAll('[data-bg]').forEach(e=>e.textContent=e.dataset[x]);document.querySelectorAll('[data-ph-bg]').forEach(e=>e.placeholder=e.dataset['ph-'+x])}
+function prepareKeyboard(){}
+
+function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
+function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
+function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
+async function save(){if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);await saveCloud(d);alert(lang==='bg'?'Протоколът е записан и добавен в архива.':'Protocol saved and added to archive.')}
+function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
+function newProtocol(){if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;const client=$('client').value.trim();const a=archiveData();let last=null;if(client){last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];}ids.forEach(id=>$(id).value='');$('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';$('pno').value='';$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});if(last){$('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;}calc();window.scrollTo({top:0,behavior:'smooth'});}
+function printProtocol(){saveSilently();window.print();}
+function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
+function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
+function closeArchive(){$('archiveModal').style.display='none'}
+function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length){box.innerHTML='<p>'+ (lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}box.innerHTML=a.map((d,i)=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
+function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
+async function shareProtocol(){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;} await shareFile();}
+const ctx=$('canvas').getContext('2d');let drawing=false;
+function pos(e){let r=$('canvas').getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*900/r.width,y:(p.clientY-r.top)*340/r.height}}
+function start(e){drawing=true;let p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()}
+function move(e){if(!drawing)return;let p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()}
+function end(){drawing=false}
+$('canvas').addEventListener('mousedown',start);$('canvas').addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+$('canvas').addEventListener('touchstart',start);$('canvas').addEventListener('touchmove',move);$('canvas').addEventListener('touchend',end);
+function openSig(t){sigTarget=t;$('sigTitle').textContent=t==='techSig'?(lang==='bg'?'Име и подпис на представителя':'Supplier representative name and signature'):(lang==='bg'?'Име и подпис на клиент и представител':'Client and representative name and signature');clearSig();$('sigModal').style.display='flex'}
+function clearSig(){ctx.clearRect(0,0,900,340);ctx.lineWidth=3;ctx.lineCap='round';}
+function saveSig(){let img=new Image();img.onload=()=>{$(sigTarget).innerHTML='';$(sigTarget).appendChild(img)};img.src=$('canvas').toDataURL('image/png');closeSig()}
+function closeSig(){$('sigModal').style.display='none'}
+async function shareFile(){
+  save();
+  const clone=document.documentElement.cloneNode(true);
+  clone.querySelector('#sigModal')?.remove();clone.querySelectorAll('.no-print').forEach(e=>e.remove());
+  const out='<!doctype html>'+clone.outerHTML;
+  const blob=new Blob([out],{type:'text/html'});
+  const file=new File([blob],'gas-protocol-'+($('pno').value||'protocol')+'.html',{type:'text/html'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({title:'Gas Protocol / Газов протокол',files:[file]});return}catch(e){}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  alert(lang==='bg'?'Файлът е изтеглен. Можете да го изпратите като прикачен файл. За PDF използвайте „Печат / PDF“.':'The file was downloaded. You can send it as an attachment. For PDF use “Print / PDF”.');
+}
+function formatBGDate(v){if(!v)return '';let p=v.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:v}
+function toISODate(v){let m=(v||'').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
+function openDatePicker(){let iso=toISODate($('date').value);$('datePicker').value=iso||new Date().toISOString().slice(0,10);if($('datePicker').showPicker)$('datePicker').showPicker();else{$('datePicker').focus();$('datePicker').click()}}
+$('datePicker').addEventListener('change',()=>{$('date').value=formatBGDate($('datePicker').value)});
+$('date').addEventListener('blur',()=>{let iso=toISODate($('date').value);if(iso)$('date').value=formatBGDate(iso)});
+$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
+function pickDate(id){const p=$(id+'Picker');p.value=toISODate($(id).value)||'';p.showPicker?p.showPicker():p.click();p.onchange=()=>{$(id).value=formatBGDate(p.value);};}
+function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{let e=$(id);if(!e)return;e.addEventListener('click',()=>{if(id!=='date')pickDate(id)});});}
+wireDates();
+</script>
+</body></html>
