@@ -19,14 +19,13 @@ test('inline JavaScript parses without syntax errors', () => {
   for (const source of scripts) new vm.Script(source);
 });
 
-test('keyboard setup runs and does not hijack Android keyboard gestures', () => {
-  assert.match(html, /function prepareKeyboard\(\)\s*\{/);
-  assert.match(html, /prepareKeyboard\(\);/);
-  assert.match(html, /e\.setAttribute\('inputmode','text'\)/);
-  assert.match(html, /e\.lang=lang/);
-  assert.doesNotMatch(html, /function prepareKeyboard\(\)[\s\S]{0,1200}preventDefault\(/);
+test('Android keyboard language switching is not overridden by app scripts', () => {
+  assert.doesNotMatch(html, /function prepareKeyboard\(/);
+  assert.doesNotMatch(html, /prepareKeyboard\(\);/);
+  assert.doesNotMatch(html, /e\.lang=lang/);
+  assert.doesNotMatch(html, /setAttribute\(['"]inputmode['"],['"]text['"]\)/);
+  assert.doesNotMatch(html, /addEventListener\(['"](?:touchstart|touchmove|keydown|keyup)['"][^)]*preventDefault/);
 });
-
 test('save distinguishes local save from cloud save failure', () => {
   assert.match(html, /async function save\(\)/);
   assert.match(html, /const cloudSaved=await saveCloud\(d\)/);
