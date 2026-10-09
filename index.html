@@ -994,15 +994,31 @@ function clearSig(){ctx.clearRect(0,0,900,340);ctx.lineWidth=3;ctx.lineCap='roun
 function saveSig(){let img=new Image();img.onload=()=>{$(sigTarget).innerHTML='';$(sigTarget).appendChild(img)};img.src=$('canvas').toDataURL('image/png');closeSig()}
 function closeSig(){$('sigModal').style.display='none'}
 async function shareFile(){
-  save();
-  const clone=document.documentElement.cloneNode(true);
-  clone.querySelector('#sigModal')?.remove();clone.querySelectorAll('.no-print').forEach(e=>e.remove());
-  const out='<!doctype html>'+clone.outerHTML;
-  const blob=new Blob([out],{type:'text/html'});
-  const file=new File([blob],'gas-protocol-'+($('pno').value||'protocol')+'.html',{type:'text/html'});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({title:'Gas Protocol / Газов протокол',files:[file]});return}catch(e){}}
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  alert(lang==='bg'?'Файлът е изтеглен. Можете да го изпратите като прикачен файл. За PDF използвайте „Печат / PDF“.':'The file was downloaded. You can send it as an attachment. For PDF use “Print / PDF”.');
+  const statusMessage=lang==='bg'?'Подготвям подписваемия PDF…':'Preparing the signable PDF…';
+  if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
+  let url=null;
+  try{
+    document.querySelectorAll('#sheet input').forEach(el=>{if(el.type==='date'&&el.value)el.setAttribute('value',el.value);else if(el.type!=='date')el.setAttribute('value',el.value);});
+    document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
+    document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
+    await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+    if(!window.html2pdf)throw new Error('PDF библиотеката не е заредена.');
+    const buffer=await window.html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:0.96},html2canvas:{scale:1.5,useCORS:true,logging:false,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('sheet')).outputPdf('arraybuffer');
+    const blob=new Blob([buffer],{type:'application/pdf'});
+    const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
+    const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
+    const file=new File([blob],filename,{type:'application/pdf'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:'Газов протокол',text:'Газов протокол за подпис. Моля, подпишете документа и ми върнете подписания PDF.',files:[file]});
+      return;
+    }
+    url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    alert(lang==='bg'?'PDF файлът е запазен. Прикачи го към съобщение във Viber или имейл. Клиентът може да го подпише в PDF приложение и да ти върне подписания файл.':'The PDF was saved. Attach it to a Viber message or email.');
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    alert((lang==='bg'?'Не успях да подготвя/споделя PDF: ':'Could not prepare/share PDF: ')+(e&&e.message?e.message:'неизвестна грешка'));
+  }finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),5000);}
 }
 
 function setupCompactMode(){
