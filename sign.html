@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Подписване на газов протокол</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:#1b2733;font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:24px auto;padding:18px}.card{background:white;border-radius:16px;padding:22px;box-shadow:0 4px 22px #102a4320;margin-bottom:16px}
+h1{font-size:23px;margin:0 0 8px;color:#123b60}h2{font-size:18px;margin:0 0 12px}p{margin:8px 0}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.field{background:#f5f8fb;border-radius:10px;padding:12px;overflow-wrap:anywhere}.field b{display:block;color:#526171;font-size:12px;text-transform:uppercase;margin-bottom:3px}
+label{display:block;font-weight:600;margin:14px 0 6px}input{width:100%;padding:12px;border:1px solid #bac7d4;border-radius:9px;font:inherit}canvas{width:100%;height:190px;border:2px dashed #8b9daf;border-radius:10px;background:#fff;touch-action:none;display:block}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:9px;padding:12px 16px;font:inherit;font-weight:650;background:#123b60;color:white;cursor:pointer}button.secondary{background:#e6edf3;color:#123b60}button:disabled{opacity:.55}#status{white-space:pre-wrap;padding:12px;border-radius:9px;background:#eef3f7;margin-top:12px}small{color:#526171}
+</style>
+</head>
+<body><main>
+<section class="card"><h1>Подписване на газов протокол</h1><p>Проверете данните по протокола. Ако са правилни, въведете името си и подпишете с пръст в полето по-долу.</p><div id="status">Зареждане на протокола…</div></section>
+<section class="card" id="protocolCard" hidden><h2>Данни на протокола</h2><div class="info" id="protocolInfo"></div><p id="notes"></p></section>
+<section class="card" id="signCard" hidden><h2>Вашият подпис</h2><label for="clientName">Име и фамилия</label><input id="clientName" autocomplete="name" maxlength="120" placeholder="Въведете името си"><label for="signature">Подпис с пръст или мишка</label><canvas id="signature" width="1200" height="380" aria-label="Поле за подпис"></canvas><div class="actions"><button class="secondary" id="clearBtn" type="button">Изчисти подписа</button><button id="submitBtn" type="button">Потвърди подписа</button></div><small>След потвърждение подписът се свързва с този протокол.</small></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
+const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
+let signed=false,loaded=false,drawing=false,ink=false;
+function status(msg,ok=false){$('status').textContent=msg;$('status').style.background=ok?'#e7f6ec':'#eef3f7';$('status').style.color=ok?'#176536':'#263746'}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addField(label,value){return '<div class="field"><b>'+esc(label)+'</b>'+esc(value||'—')+'</div>'}
+async function init(){
+ if(!token){status('Липсва токенът за подписване. Отворете пълния линк, получен от изпращача.');return}
+ try{
+  const {data,error}=await sb.rpc('get_protocol_for_signing',{p_token:token});
+  if(error)throw error;
+  const p=data.protocol||{},isSigned=!!data.signed;signed=isSigned;loaded=true;
+  $('protocolInfo').innerHTML=
+   addField('Номер',p.pno)+addField('Дата',p.date)+addField('Клиент / фирма',p.client)+addField('ЕИК',p.eik)+
+   addField('Техник',p.tech_name||p.tech)+addField('Обект',p.site)+addField('Адрес / контакт',p.contact)+
+   addField('Коректор — начално',p.c1)+addField('Коректор — крайно',p.c2)+addField('Коректор — разход',p.cv)+
+   addField('Разходомер — начално',p.m1)+addField('Разходомер — крайно',p.m2)+addField('Разходомер — разход',p.mv);
+  $('notes').textContent=p.notes?'Забележки: '+p.notes:'';
+  $('protocolCard').hidden=false;
+  if(isSigned){$('signCard').hidden=true;status('Този протокол вече е подписан. Благодарим!',true);return}
+  $('signCard').hidden=false;status('Проверете данните и подпишете, ако всичко е правилно.',true);
+ }catch(e){console.error(e);status(e.message||'Не успяхме да заредим протокола. Проверете линка и опитайте отново.')}
+}
+const c=$('signature'),ctx=c.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#152536';
+function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}
+c.addEventListener('pointerdown',e=>{if(!loaded||signed)return;drawing=true;ink=true;c.setPointerCapture(e.pointerId);const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()});
+c.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});
+function stop(){drawing=false}c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
+$('clearBtn').onclick=()=>{ctx.clearRect(0,0,c.width,c.height);ink=false};
+$('submitBtn').onclick=async()=>{
+ if(!loaded||signed)return;
+ const name=$('clientName').value.trim();
+ if(name.length<2){status('Моля, въведете името си.');$('clientName').focus();return}
+ if(!ink){status('Моля, поставете подпис в полето.');return}
+ $('submitBtn').disabled=true;status('Записване на подписа…');
+ try{
+  const {data,error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:c.toDataURL('image/png')});
+  if(error)throw error;
+  signed=true;$('signCard').hidden=true;status('Подписът е записан успешно. Можете да затворите тази страница.',true);
+ }catch(e){console.error(e);status(e.message||'Не успяхме да запишем подписа. Опитайте отново.');$('submitBtn').disabled=false}
+};
+init();
+</script></body></html>
