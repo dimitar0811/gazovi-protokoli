@@ -1008,7 +1008,8 @@ async function shareFile(channel='viber'){
     const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
     const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
     const file=new File([blob],filename,{type:'application/pdf'});
-    if(channel==='viber'&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    // Native share sheet can attach the actual PDF to email or messaging apps.
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
       await navigator.share({title:'Газов протокол',text:'Газов протокол за подпис. Моля, подпишете документа и ми върнете подписания PDF.',files:[file]});
       return;
     }
@@ -1016,11 +1017,11 @@ async function shareFile(channel='viber'){
     const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
     if(channel==='email'){
       const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
-      const body=encodeURIComponent('Здравейте,\n\nИзпращам газов протокол за преглед и подпис.\n\nПоздрави');
+      const body=encodeURIComponent('Здравейте,\\n\\nИзпращам газов протокол за преглед и подпис.\\n\\nПоздрави');
       window.location.href='mailto:?subject='+subject+'&body='+body;
-      setTimeout(()=>alert(lang==='bg'?'PDF файлът е изтеглен. В новото писмо натисни „Прикачи файл“ и избери PDF от „Изтегляния“. След това изпрати имейла.':'PDF downloaded. Attach it to the email from Downloads.'),500);
+      setTimeout(()=>alert(lang==='bg'?'Този браузър не поддържа автоматично прикачване. PDF е изтеглен. В отвореното писмо натисни „Прикачи файл“ и избери най-новия Protokol-…pdf от „Изтегляния“.':'This browser cannot attach files automatically. Attach the downloaded PDF to the email.'),700);
     }else{
-      alert(lang==='bg'?'Ако Viber не се отвори автоматично, PDF файлът е изтеглен. Отвори Viber, избери клиента и прикачи файла от „Изтегляния“.':'If Viber did not open, attach the downloaded PDF from Downloads.');
+      alert(lang==='bg'?'Този браузър не поддържа директно споделяне на файл. PDF е изтеглен — прикачи го във Viber от „Изтегляния“.':'This browser cannot share files directly. Attach the downloaded PDF in Viber.');
     }
   }catch(e){
     if(e&&e.name==='AbortError')return;
