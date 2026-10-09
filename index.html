@@ -583,7 +583,7 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
  body{zoom:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:12px!important}
  header,.no-print,.user-bar,#archiveModal,#authGate{display:none!important}
  main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
- #sheet,.sheet{width:100%!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+ #sheet,.sheet{zoom:1!important;width:100%!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
  .section{margin:5px 0!important;padding:6px!important;break-inside:auto!important;page-break-inside:auto!important}
  .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;row-gap:8px!important}
  .grid>.span2,.grid>.span3,.grid>.span4{grid-column:span 1!important;min-width:0!important}
@@ -644,6 +644,12 @@ details.compact-details[open]>summary:before{content:"−"}
   <button onclick="logout()">Изход</button>
 </div>
 <main>
+<div class="actions no-print" id="zoomControls" style="justify-content:flex-end;align-items:center;margin:8px 0">
+  <span style="font-weight:bold;color:#123b60">🔍 Увеличение:</span>
+  <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
+  <button type="button" class="secondary" onclick="changeProtocolZoom(0)" aria-label="Нормален размер">100%</button>
+  <button type="button" onclick="changeProtocolZoom(0.1)" aria-label="Увеличи протокола">＋</button>
+</div>
 <div class="sheet" id="sheet">
 <div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span style="display:inline-flex;align-items:center;gap:4px"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"></span></small></div>
 
@@ -825,6 +831,13 @@ async function saveCloud(d){
 }
 async function deleteCloud(d){if(!currentUser||!currentCompanyId||!d?.pno)return;await sb.from('protocols').delete().eq('company_id',currentCompanyId).eq('pno',d.pno)}
 
+let protocolZoom=1;
+function changeProtocolZoom(delta){
+  protocolZoom=delta===0?1:Math.max(0.8,Math.min(1.6,Math.round((protocolZoom+delta)*10)/10));
+  $('sheet').style.zoom=String(protocolZoom);
+  const reset=$('zoomControls')?.querySelector('button[aria-label="Нормален размер"]');
+  if(reset) reset.textContent=Math.round(protocolZoom*100)+'%';
+}
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
 function setLang(x){
