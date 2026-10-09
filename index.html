@@ -831,17 +831,6 @@ function setLang(x){
   // blur an input or interfere with Android/Gboard's own language picker.
   // Keep per-field language unset so Android's keyboard can choose its own language.
 }
-function prepareKeyboard(){
-  // Do not intercept touch/keyboard events: the language selector belongs to
-  // Android's keyboard, not the web page. Explicit text hints improve Gboard's
-  // behavior in installed/PWA and regular browser modes.
-  document.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(e=>{
-    e.setAttribute('autocorrect','on');
-    e.setAttribute('spellcheck','true');
-    if(!e.hasAttribute('inputmode')) e.setAttribute('inputmode','text');
-  });
-  document.querySelectorAll('input[type="number"]').forEach(e=>e.setAttribute('inputmode','decimal'));
-}
 
 function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
@@ -939,9 +928,8 @@ function setupCompactMode(){
   }
 }
 
-// Apply mobile layout and keyboard hints before app initialization.
+// Apply mobile layout before app initialization. Leave keyboard behavior to Android/browser defaults.
 setupCompactMode();
-prepareKeyboard();
 
 function formatBGDate(v){if(!v)return '';let p=v.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:v}
 function toISODate(v){let m=(v||'').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
