@@ -553,7 +553,18 @@ svg:not(:root).svg-inline--fa, svg:not(:host).svg-inline--fa {
 .fad.fa-inverse,
 .fa-duotone.fa-inverse {
   color: var(--fa-inverse, #fff);
-}</style><style>
+}
+#pdfViewerModal{display:none;position:fixed;inset:0;z-index:10050;background:#eef2f6;flex-direction:column;color:#152536}
+#pdfViewerModal .pdf-toolbar{display:flex;align-items:center;gap:8px;padding:10px;background:#123b60;color:#fff;flex-wrap:wrap}
+#pdfViewerModal .pdf-toolbar button{padding:8px 12px;border:0;border-radius:7px;font-size:15px}
+#pdfViewerModal .pdf-status{font-size:13px}
+#pdfViewerModal .pdf-viewport{flex:1;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom;padding:12px}
+#pdfViewerModal .pdf-pages{transform-origin:top left;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:100%}
+#pdfViewerModal canvas{display:block;background:#fff;max-width:none;box-shadow:0 2px 9px #0003}
+#pdfViewerModal .pdf-loading{padding:24px;text-align:center}
+@media print{#pdfViewerModal{display:none!important}}
+
+</style><style>
 *{box-sizing:border-box}body{margin:0;background:#eef3f7;color:#172536;font-family:Arial,sans-serif}
 header{background:#123b60;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 header h1{font-size:18px;margin:0}.lang button{padding:6px 9px;border:0;border-radius:6px;background:#dce8f2;color:#123b60;font-weight:bold}
@@ -648,10 +659,28 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
 <main>
 <div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:8px;background:#fff;border:2px solid #123b60;border-radius:12px;box-shadow:0 3px 12px #0003">
   <span style="font-weight:bold;color:#123b60">🔍 ЛУПА</span>
+  <button type="button" onclick="openPdfViewer()" style="background:#123b60;color:#fff">📄 Преглед PDF</button>
+
   <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
   <button type="button" class="secondary" onclick="changeProtocolZoom(0)" aria-label="Нормален размер">100%</button>
   <button type="button" onclick="changeProtocolZoom(0.1)" aria-label="Увеличи протокола">＋</button>
 </div>
+
+<div id="pdfViewerModal" role="dialog" aria-modal="true" aria-label="Преглед на PDF">
+  <div class="pdf-toolbar">
+    <strong style="flex:1">Преглед на PDF</strong>
+    <button type="button" onclick="changePdfZoom(-0.2)">−</button>
+    <button type="button" onclick="changePdfZoom(0)">100%</button>
+    <button type="button" onclick="changePdfZoom(0.2)">＋</button>
+    <button type="button" onclick="downloadCurrentPdf()">Запази PDF</button>
+    <button type="button" onclick="closePdfViewer()">Затвори ✕</button>
+  </div>
+  <div id="pdfStatus" class="pdf-loading">Подготовка на PDF…</div>
+  <div id="pdfViewport" class="pdf-viewport" style="display:none">
+    <div id="pdfPages" class="pdf-pages"></div>
+  </div>
+</div>
+
 <div class="sheet" id="sheet">
 <div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span style="display:inline-flex;align-items:center;gap:4px"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"></span></small></div>
 
@@ -871,6 +900,45 @@ async function save(){
 function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
 function newProtocol(){if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;const client=$('client').value.trim();const a=archiveData();let last=null;if(client){last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];}ids.forEach(id=>$(id).value='');$('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';$('pno').value='';
 $('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});if(last){$('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;}calc();window.scrollTo({top:0,behavior:'smooth'});}
+
+let currentPdfBlob=null,pdfZoom=1,pdfBaseWidth=0,pdfDoc=null;
+function loadExternalScript(src){return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>x.src===src);if(existing){if(existing.dataset.loaded==='yes')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}const sc=document.createElement('script');sc.src=src;sc.onload=()=>{sc.dataset.loaded='yes';resolve()};sc.onerror=()=>reject(new Error('Не може да се зареди библиотека за PDF'));document.head.appendChild(sc);});}
+async function openPdfViewer(){
+ const modal=$('pdfViewerModal'),status=$('pdfStatus'),viewport=$('pdfViewport'),pages=$('pdfPages');
+ modal.style.display='flex';status.style.display='block';status.textContent='Подготовка на PDF…';viewport.style.display='none';pages.innerHTML='';currentPdfBlob=null;pdfDoc=null;pdfZoom=1;
+ try{
+  saveSilently();
+  document.querySelectorAll('#sheet input').forEach(el=>{if(el.type==='date'&&el.value)el.setAttribute('value',el.value);else if(el.type!=='date')el.setAttribute('value',el.value);});
+  document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
+  document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
+  await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+  await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  if(!window.html2pdf||!window.pdfjsLib)throw new Error('PDF библиотеките не са налични. Провери интернет връзката.');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  status.textContent='Създаване на PDF…';
+  const buffer=await window.html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:0.96},html2canvas:{scale:1.5,useCORS:true,logging:false,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('sheet')).outputPdf('arraybuffer');
+  currentPdfBlob=new Blob([buffer],{type:'application/pdf'});
+  pdfDoc=await window.pdfjsLib.getDocument({data:new Uint8Array(buffer)}).promise;
+  status.style.display='none';viewport.style.display='block';
+  for(let n=1;n<=pdfDoc.numPages;n++){
+   const page=await pdfDoc.getPage(n),vp=page.getViewport({scale:1.25}),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+   canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);canvas.style.width='min(100%, '+Math.ceil(vp.width)+'px)';canvas.style.height='auto';canvas.setAttribute('aria-label','PDF страница '+n);
+   pages.appendChild(canvas);await page.render({canvasContext:ctx,viewport:vp}).promise;
+  }
+  pdfBaseWidth=pages.getBoundingClientRect().width||viewport.clientWidth;applyPdfZoom();
+ }catch(e){status.style.display='block';status.textContent='Не успях да отворя PDF прегледа: '+(e&&e.message?e.message:'неизвестна грешка')+'. Провери интернет връзката и опитай отново.';viewport.style.display='none';}
+}
+function applyPdfZoom(){const pages=$('pdfPages');if(!pages)return;pages.style.transform='scale('+pdfZoom+')';pages.style.width=(100*pdfZoom)+'%';pages.style.marginBottom=((pdfZoom-1)*Math.max(400,pages.scrollHeight))+'px';}
+function changePdfZoom(delta){pdfZoom=delta===0?1:Math.max(.6,Math.min(3,pdfZoom+delta));applyPdfZoom();}
+function downloadCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const u=URL.createObjectURL(currentPdfBlob),a=document.createElement('a');a.href=u;a.download='gazov-protokol.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+function closePdfViewer(){$('pdfViewerModal').style.display='none';$('pdfPages').innerHTML='';currentPdfBlob=null;pdfDoc=null;}
+(function enablePdfPinch(){
+ const v=document.getElementById('pdfViewport');if(!v)return;let startDist=0,startZoom=1;
+ v.addEventListener('touchstart',e=>{if(e.touches.length===2){startDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);startZoom=pdfZoom;}},{passive:true});
+ v.addEventListener('touchmove',e=>{if(e.touches.length===2&&startDist>0){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);pdfZoom=Math.max(.6,Math.min(3,startZoom*d/startDist));applyPdfZoom();}},{passive:false});
+ v.addEventListener('touchend',()=>{startDist=0;},{passive:true});
+})();
+
 function printProtocol(){
   saveSilently();
   // Ensure every field's current value is represented when the browser creates the PDF.
