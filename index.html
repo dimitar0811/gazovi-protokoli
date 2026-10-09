@@ -581,7 +581,7 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 @media print{
  html,body{width:100%!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important}
  body{zoom:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:12px!important}
- header,.no-print,.user-bar,#archiveModal,#authGate{display:none!important}
+ #zoomControls{display:none!important} header,.no-print,.user-bar,#archiveModal,#authGate{display:none!important}
  main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
  #sheet,.sheet{zoom:1!important;width:100%!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
  .section{margin:5px 0!important;padding:6px!important;break-inside:auto!important;page-break-inside:auto!important}
@@ -644,8 +644,8 @@ details.compact-details[open]>summary:before{content:"−"}
   <button onclick="logout()">Изход</button>
 </div>
 <main>
-<div class="actions no-print" id="zoomControls" style="justify-content:flex-end;align-items:center;margin:8px 0">
-  <span style="font-weight:bold;color:#123b60">🔍 Увеличение:</span>
+<div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:8px;background:#fff;border:2px solid #123b60;border-radius:12px;box-shadow:0 3px 12px #0003">
+  <span style="font-weight:bold;color:#123b60">🔍 ЛУПА</span>
   <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
   <button type="button" class="secondary" onclick="changeProtocolZoom(0)" aria-label="Нормален размер">100%</button>
   <button type="button" onclick="changeProtocolZoom(0.1)" aria-label="Увеличи протокола">＋</button>
