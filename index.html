@@ -658,7 +658,7 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
 </div>
 <main>
 <div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:8px;background:#fff;border:2px solid #123b60;border-radius:12px;box-shadow:0 3px 12px #0003">
-  <span style="font-weight:bold;color:#123b60">🔍 ЛУПА</span>
+  <span id="zoomDragHandle" title="Плъзни, за да преместиш лупата" style="font-weight:bold;color:#123b60;cursor:move;touch-action:none;user-select:none;padding:4px">⠿ 🔍 ЛУПА</span>
   <button type="button" onclick="openPdfViewer()" style="background:#123b60;color:#fff">📄 Преглед PDF</button>
 
   <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
@@ -939,6 +939,30 @@ function closePdfViewer(){$('pdfViewerModal').style.display='none';$('pdfPages')
  v.addEventListener('touchend',()=>{startDist=0;},{passive:true});
 })();
 
+
+function enableMovableZoomControls(){
+ const panel=document.getElementById('zoomControls'),handle=document.getElementById('zoomDragHandle');
+ if(!panel||!handle||panel.dataset.movable==='yes')return;
+ panel.dataset.movable='yes';
+ panel.style.right='auto';panel.style.left='12px';
+ let dragging=false,startX=0,startY=0,origX=0,origY=0;
+ handle.addEventListener('pointerdown',e=>{
+  dragging=true;handle.setPointerCapture?.(e.pointerId);
+  const r=panel.getBoundingClientRect();startX=e.clientX;startY=e.clientY;origX=r.left;origY=r.top;
+  handle.style.cursor='grabbing';e.preventDefault();
+ });
+ handle.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  const x=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,origX+e.clientX-startX));
+  const y=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,origY+e.clientY-startY));
+  panel.style.left=x+'px';panel.style.top=y+'px';panel.style.right='auto';
+ });
+ const stop=()=>{dragging=false;handle.style.cursor='move';};
+ handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
+ window.addEventListener('resize',()=>{const r=panel.getBoundingClientRect();panel.style.left=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,r.left))+'px';panel.style.top=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,r.top))+'px';});
+}
+
+enableMovableZoomControls();
 function printProtocol(){
   saveSilently();
   // Ensure every field's current value is represented when the browser creates the PDF.
