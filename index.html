@@ -985,11 +985,16 @@ function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
 
 async function createSigningLink(){
+  if(!$('client').value.trim()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
+  if(!currentUser){alert(lang==='bg'?'За защитен линк за подпис е необходим вход.':'Sign in to create a secure signing link.');return;}
+  if(!currentCompanyId && !(await ensureCompany())){alert(lang==='bg'?'Не е избран фирмен архив.':'No company archive selected.');return;}
   if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
-  if(!currentUser||!currentCompanyId){alert(lang==='bg'?'За защитен линк за подпис е необходим вход и облачен архив.':'Sign in and use the cloud archive to create a secure signing link.');return;}
   const pno=$('pno').value.trim();
   if(!pno){alert(lang==='bg'?'Протоколът няма номер.':'Protocol number is missing.');return;}
   try{
+    const d=collect();d.savedAt=Date.now();
+    const cloudSaved=await saveCloud(d);
+    if(!cloudSaved)return;
     const {data,error}=await sb.rpc('create_protocol_signing_request',{p_pno:pno,p_company_id:currentCompanyId});
     if(error)throw error;
     const token=typeof data==='string'?data:(data?.token||data?.create_protocol_signing_request);
