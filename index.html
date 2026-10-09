@@ -829,16 +829,15 @@ function setLang(x){
   document.querySelectorAll('[data-ph-bg]').forEach(e=>e.placeholder=e.dataset['ph-'+x]);
   // Keep the active text field focused; changing the app language must not
   // blur an input or interfere with Android/Gboard's own language picker.
-  document.querySelectorAll('input:not([type="date"]):not([type="number"]), textarea').forEach(e=>{e.lang=x;});
+  // Keep per-field language unset so Android's keyboard can choose its own language.
 }
 function prepareKeyboard(){
   // Do not intercept touch/keyboard events: the language selector belongs to
   // Android's keyboard, not the web page. Explicit text hints improve Gboard's
   // behavior in installed/PWA and regular browser modes.
-  document.querySelectorAll('input:not([type="date"]):not([type="number"]), textarea').forEach(e=>{
+  document.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(e=>{
     e.setAttribute('autocorrect','on');
     e.setAttribute('spellcheck','true');
-    e.lang=lang;
     if(!e.hasAttribute('inputmode')) e.setAttribute('inputmode','text');
   });
   document.querySelectorAll('input[type="number"]').forEach(e=>e.setAttribute('inputmode','decimal'));
