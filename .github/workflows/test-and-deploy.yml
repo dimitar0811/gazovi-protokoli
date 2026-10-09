@@ -1,0 +1,69 @@
+name: Test and deploy static app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify application entry point
+        run: |
+          test -f index.html
+          grep -qi '<!doctype html' index.html
+          grep -q 'function setLang' index.html
+          grep -q 'function save()' index.html
+          grep -q 'function load()' index.html
+          echo "Basic application smoke checks passed."
+
+      - name: Check inline JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
+            .map(match => match[1])
+            .filter(script => script.trim());
+          if (!scripts.length) throw new Error('No inline JavaScript found');
+          const vm = require('vm');
+          for (let i = 0; i < scripts.length; i++) {
+            new vm.Script(scripts[i], { filename: `inline-script-${i + 1}.js` });
+          }
+          console.log(`JavaScript syntax passed for ${scripts.length} inline script(s).`);
+          NODE
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
