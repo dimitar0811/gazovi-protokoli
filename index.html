@@ -935,7 +935,7 @@ function toISODate(v){let m=(v||'').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$
 function openDatePicker(){let iso=toISODate($('date').value);$('datePicker').value=iso||new Date().toISOString().slice(0,10);if($('datePicker').showPicker)$('datePicker').showPicker();else{$('datePicker').focus();$('datePicker').click()}}
 $('datePicker').addEventListener('change',()=>{$('date').value=formatBGDate($('datePicker').value)});
 $('date').addEventListener('blur',()=>{let iso=toISODate($('date').value);if(iso)$('date').value=formatBGDate(iso)});
-$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
+$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');try{setupCompactMode()}catch(e){console.error('Compact view setup failed:',e)}sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
 function pickDate(id){const p=$(id+'Picker');p.value=toISODate($(id).value)||'';p.showPicker?p.showPicker():p.click();p.onchange=()=>{$(id).value=formatBGDate(p.value);};}
 function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{let e=$(id);if(!e)return;e.addEventListener('click',()=>{if(id!=='date')pickDate(id)});});}
 wireDates();
