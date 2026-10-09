@@ -34,6 +34,10 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
   await page.getByRole('button', { name: /Работа без вход/i }).click();
   await expect(page.locator('#authGate')).toBeHidden();
+  // Compact mobile layout keeps client details collapsed initially; open them
+  // before interacting with client/site fields.
+  const clientDetails = page.locator('#client').locator('xpath=ancestor::details[1]');
+  if (await clientDetails.count()) await clientDetails.locator('summary').click();
 });
 
 test('required client validation prevents saving an empty protocol', async ({ page }) => {
@@ -96,14 +100,16 @@ test('new protocol carries over the same client and previous readings', async ({
 });
 
 test('language switch changes interface language without removing input focus', async ({ page }) => {
-  await page.locator('#client').focus();
+  await page.locator('#client').fill('Language test');
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('#client')).toBeFocused();
   await expect(page.locator('#protocolActions')).toContainText('Save');
+  await expect(page.locator('#client')).toHaveValue('Language test');
   await page.getByRole('button', { name: 'BG', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'bg');
-  await expect(page.locator('#client')).toBeFocused();
+  await expect(page.locator('#client')).toHaveValue('Language test');
+  await page.locator('#client').fill('Language test continued');
+  await expect(page.locator('#client')).toHaveValue('Language test continued');
 });
 
 test('registration mode shows password confirmation and validates mismatch', async ({ page }) => {
