@@ -822,13 +822,32 @@ async function deleteCloud(d){if(!currentUser||!currentCompanyId||!d?.pno)return
 
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
-function setLang(x){lang=x;document.documentElement.lang=x;document.querySelectorAll('[data-bg]').forEach(e=>e.textContent=e.dataset[x]);document.querySelectorAll('[data-ph-bg]').forEach(e=>e.placeholder=e.dataset['ph-'+x])}
-function prepareKeyboard(){}
+function setLang(x){
+  lang=x;
+  document.documentElement.lang=x;
+  document.querySelectorAll('[data-bg]').forEach(e=>e.textContent=e.dataset[x]);
+  document.querySelectorAll('[data-ph-bg]').forEach(e=>e.placeholder=e.dataset['ph-'+x]);
+  // Keep the active text field focused; changing the app language must not
+  // blur an input or interfere with Android/Gboard's own language picker.
+  document.querySelectorAll('input:not([type="date"]):not([type="number"]), textarea').forEach(e=>{e.lang=x;});
+}
+function prepareKeyboard(){
+  // Do not intercept touch/keyboard events: the language selector belongs to
+  // Android's keyboard, not the web page. Explicit text hints improve Gboard's
+  // behavior in installed/PWA and regular browser modes.
+  document.querySelectorAll('input:not([type="date"]):not([type="number"]), textarea').forEach(e=>{
+    e.setAttribute('autocorrect','on');
+    e.setAttribute('spellcheck','true');
+    e.lang=lang;
+    if(!e.hasAttribute('inputmode')) e.setAttribute('inputmode','text');
+  });
+  document.querySelectorAll('input[type="number"]').forEach(e=>e.setAttribute('inputmode','decimal'));
+}
 
 function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
-async function save(){
+async async function save(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
   if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
   if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);
@@ -838,8 +857,8 @@ async function save(){
   d.updated_by=currentUser?.id||'';
   d.createdByEmail=old?.createdByEmail||currentUser?.email||'';
   d.updatedByEmail=currentUser?.email||'';
-  localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);await saveCloud(d);
-  alert(lang==='bg'?'Протоколът е записан и добавен в общия архив.':'Protocol saved to the shared archive.');
+  localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);const cloudSaved=await saveCloud(d);
+  alert(cloudSaved?(lang==='bg'?'Протоколът е записан и добавен в архива.':'Protocol saved to the archive.'):(lang==='bg'?'Протоколът е записан локално, но не и в облака. Проверете връзката и опитайте отново.':'Protocol saved locally, but not to the cloud. Check the connection and try again.'));
 }
 function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
 function newProtocol(){if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;const client=$('client').value.trim();const a=archiveData();let last=null;if(client){last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];}ids.forEach(id=>$(id).value='');$('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';$('pno').value='';setupCompactMode();
@@ -921,8 +940,9 @@ function setupCompactMode(){
   }
 }
 
-// Apply the compact working screen before the rest of app initialization.
+// Apply mobile layout and keyboard hints before app initialization.
 setupCompactMode();
+prepareKeyboard();
 
 function formatBGDate(v){if(!v)return '';let p=v.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:v}
 function toISODate(v){let m=(v||'').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
