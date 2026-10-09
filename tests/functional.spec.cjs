@@ -81,6 +81,10 @@ test('saved protocol survives reload and can be opened from archive', async ({ p
   await expect.poll(() => page.evaluate(() => localStorage.getItem('gasProtocolV2'))).toContain('Фирма за повторение');
   await page.reload();
   await page.getByRole('button', { name: /Работа без вход/i }).click();
+  await page.locator('#client').evaluate(el => {
+    const details = el.closest('details');
+    if (details) details.open = true;
+  });
   await page.getByRole('button', { name: 'Архив' }).click();
   await expect(page.locator('#archiveList')).toContainText('Фирма за повторение');
   await page.getByRole('button', { name: 'Отвори' }).first().click();
@@ -99,7 +103,7 @@ test('new protocol carries over the same client and previous readings', async ({
   await expect(page.locator('#m1')).toHaveValue('91.500');
 });
 
-test('language switch changes interface language without removing input focus', async ({ page }) => {
+test('language switch changes interface language and keeps field values editable', async ({ page }) => {
   await page.locator('#client').fill('Language test');
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
