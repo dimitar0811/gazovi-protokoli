@@ -104,7 +104,7 @@ begin
   where id = v_request.id;
 
   update public.protocols
-  set client_name = trim(p_client_name), client_sig = p_client_signature, saved_at = now()
+  set client_name = trim(p_client_name), client_sig = '<img src="' || p_client_signature || '" alt="Подписано от клиента" style="max-width:100%;max-height:90px">', saved_at = now()
   where company_id = v_request.company_id and pno = v_request.protocol_no;
 
   if not found then raise exception 'Не успях да намеря протокола за запис на подписа.'; end if;
