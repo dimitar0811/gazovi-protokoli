@@ -929,6 +929,7 @@ $('date').addEventListener('blur',()=>{let iso=toISODate($('date').value);if(iso
 $('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
 function pickDate(id){const p=$(id+'Picker');p.value=toISODate($(id).value)||'';p.showPicker?p.showPicker():p.click();p.onchange=()=>{$(id).value=formatBGDate(p.value);};}
 function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{let e=$(id);if(!e)return;e.addEventListener('click',()=>{if(id!=='date')pickDate(id)});});}
+setupCompactMode();
 wireDates();
 </script>
 </body>
