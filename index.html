@@ -723,7 +723,8 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
   <button type="button" onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
   <button type="button" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
   <button type="button" onclick="printProtocol()" data-bg="Печат / PDF" data-en="Print / PDF">Печат / PDF</button>
-  <button type="button" onclick="shareProtocol()" data-bg="Изпрати като файл" data-en="Share as file">Изпрати като файл</button>
+  <button type="button" onclick="shareProtocol('email')" data-bg="✉️ Изпрати по имейл" data-en="✉️ Send by email">✉️ Изпрати по имейл</button>
+  <button type="button" onclick="shareProtocol('viber')" data-bg="💬 Изпрати по Viber" data-en="💬 Send via Viber">💬 Изпрати по Viber</button>
 </div>
 
 </main>
@@ -981,7 +982,7 @@ function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length)
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
-async function shareProtocol(){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;} await shareFile();}
+async function shareProtocol(channel='viber'){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;} await shareFile(channel);}
 const ctx=$('canvas').getContext('2d');let drawing=false;
 function pos(e){let r=$('canvas').getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*900/r.width,y:(p.clientY-r.top)*340/r.height}}
 function start(e){drawing=true;let p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()}
@@ -993,8 +994,7 @@ function openSig(t){sigTarget=t;$('sigTitle').textContent=t==='techSig'?(lang===
 function clearSig(){ctx.clearRect(0,0,900,340);ctx.lineWidth=3;ctx.lineCap='round';}
 function saveSig(){let img=new Image();img.onload=()=>{$(sigTarget).innerHTML='';$(sigTarget).appendChild(img)};img.src=$('canvas').toDataURL('image/png');closeSig()}
 function closeSig(){$('sigModal').style.display='none'}
-async function shareFile(){
-  const statusMessage=lang==='bg'?'Подготвям подписваемия PDF…':'Preparing the signable PDF…';
+async function shareFile(channel='viber'){
   if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
   let url=null;
   try{
@@ -1008,13 +1008,20 @@ async function shareFile(){
     const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
     const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
     const file=new File([blob],filename,{type:'application/pdf'});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    if(channel==='viber'&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
       await navigator.share({title:'Газов протокол',text:'Газов протокол за подпис. Моля, подпишете документа и ми върнете подписания PDF.',files:[file]});
       return;
     }
     url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-    alert(lang==='bg'?'PDF файлът е запазен. Прикачи го към съобщение във Viber или имейл. Клиентът може да го подпише в PDF приложение и да ти върне подписания файл.':'The PDF was saved. Attach it to a Viber message or email.');
+    if(channel==='email'){
+      const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
+      const body=encodeURIComponent('Здравейте,\n\nИзпращам газов протокол за преглед и подпис.\n\nПоздрави');
+      window.location.href='mailto:?subject='+subject+'&body='+body;
+      setTimeout(()=>alert(lang==='bg'?'PDF файлът е изтеглен. В новото писмо натисни „Прикачи файл“ и избери PDF от „Изтегляния“. След това изпрати имейла.':'PDF downloaded. Attach it to the email from Downloads.'),500);
+    }else{
+      alert(lang==='bg'?'Ако Viber не се отвори автоматично, PDF файлът е изтеглен. Отвори Viber, избери клиента и прикачи файла от „Изтегляния“.':'If Viber did not open, attach the downloaded PDF from Downloads.');
+    }
   }catch(e){
     if(e&&e.name==='AbortError')return;
     alert((lang==='bg'?'Не успях да подготвя/споделя PDF: ':'Could not prepare/share PDF: ')+(e&&e.message?e.message:'неизвестна грешка'));
