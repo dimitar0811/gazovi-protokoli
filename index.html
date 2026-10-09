@@ -589,8 +589,11 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
  h1,h2,h3,p{margin-top:2px!important;margin-bottom:2px!important;line-height:1.1!important}
  h3{font-size:11px!important}
  label{margin-bottom:1px!important;font-size:9px!important}
- input,textarea,select{padding:2px 3px!important;min-height:0!important;height:auto!important;font-size:9px!important;line-height:1.1!important}
- textarea{min-height:20px!important;max-height:34px!important}
+ input,textarea,select{padding:2px 3px!important;min-height:0!important;height:auto!important;font-size:9px!important;line-height:1.1!important;color:#111!important;background:#fff!important;border:1px solid #555!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none!important}
+ input[type="date"],input[type="text"],input[type="number"]{display:inline-block!important;visibility:visible!important;opacity:1!important}
+ textarea{min-height:20px!important;max-height:none!important;overflow:visible!important;white-space:pre-wrap!important}
+ details.compact-details:not([open])>.compact-fields{display:block!important}
+ details.compact-details>summary{display:none!important}
  button{display:none!important}
  .footer,.signatures,.signature{break-inside:avoid!important;page-break-inside:avoid!important}
  *{box-sizing:border-box!important}
@@ -851,7 +854,17 @@ async function save(){
 function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
 function newProtocol(){if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;const client=$('client').value.trim();const a=archiveData();let last=null;if(client){last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];}ids.forEach(id=>$(id).value='');$('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';$('pno').value='';
 $('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});if(last){$('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;}calc();window.scrollTo({top:0,behavior:'smooth'});}
-function printProtocol(){saveSilently();window.print();}
+function printProtocol(){
+  saveSilently();
+  // Ensure every field's current value is represented when the browser creates the PDF.
+  document.querySelectorAll('#sheet input').forEach(el=>{
+    if(el.type==='date' && el.value) el.setAttribute('value',el.value);
+    else if(el.type!=='date') el.setAttribute('value',el.value);
+  });
+  document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
+  document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
+  window.print();
+}
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
