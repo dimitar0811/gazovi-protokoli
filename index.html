@@ -636,6 +636,14 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 </div>
 </div>
 
+<div class="actions no-print" id="protocolActions">
+  <button type="button" onclick="newProtocol()" data-bg="Нов протокол" data-en="New protocol">Нов протокол</button>
+  <button type="button" onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
+  <button type="button" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
+  <button type="button" onclick="printProtocol()" data-bg="Печат / PDF" data-en="Print / PDF">Печат / PDF</button>
+  <button type="button" onclick="shareProtocol()" data-bg="Изпрати като файл" data-en="Share as file">Изпрати като файл</button>
+</div>
+
 </main>
 
 <div id="archiveModal" style="display: none;"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div id="archiveList"><div class="archive-item"><div class="archive-meta"><b>GP-8102026 г-1665</b><br>08.10.2026 г. — 1<br><small>Гр. Петрич с.Скрът</small></div><div class="archive-actions"><button onclick="openArchived(0)">Отвори</button><button class="secondary" onclick="deleteArchived(0)">Изтрий</button></div></div></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
