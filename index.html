@@ -690,11 +690,24 @@ async function ensureCompany(){
 }
 async function onSignedIn(user){
   currentUser=user;
+  // Никога не оставяме затъмняващия екран върху протоколите след успешен вход.
   $('authGate').style.display='none';
   $('userBar').style.display='flex';
   $('userEmail').textContent=user.email||'';
-  if(await ensureCompany()) await loadCloud();
-  else {$('authGate').style.display='flex';authMessage('Въведете фирмения код, за да използвате общия архив.');}
+  try{
+    if(await ensureCompany()){
+      await loadCloud();
+    }else{
+      $('authGate').style.display='none';
+      $('userBar').style.display='flex';
+      $('userEmail').textContent=(user.email||'')+' — локален режим';
+    }
+  }catch(e){
+    console.warn('Cloud setup unavailable; continuing locally',e);
+    $('authGate').style.display='none';
+    $('userBar').style.display='flex';
+    $('userEmail').textContent=(user.email||'')+' — локален режим';
+  }
 }
 async function logout(){await sb.auth.signOut();currentUser=null;currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 function continueOffline(){$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent='Офлайн режим';}
@@ -704,8 +717,10 @@ async function loadCloud(){
   if(error){
     console.warn('Company archive unavailable',error);
     currentCompanyId='';localStorage.removeItem('gasCompanyId');
-    $('authGate').style.display='flex';
-    authMessage('Няма достъп до фирмения архив. Въведете фирмения код отново.');
+    // Грешка в облачния архив не трябва да блокира бутоните на протокола.
+    $('authGate').style.display='none';
+    $('userBar').style.display='flex';
+    $('userEmail').textContent=(currentUser?.email||'')+' — локален режим';
     return;
   }
   const arr=(data||[]).map(cloudToLocal);
