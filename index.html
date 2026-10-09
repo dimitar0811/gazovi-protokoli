@@ -725,6 +725,7 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
   <button type="button" onclick="printProtocol()" data-bg="Печат / PDF" data-en="Print / PDF">Печат / PDF</button>
   <button type="button" onclick="shareProtocol('email')" data-bg="✉️ Изпрати по имейл" data-en="✉️ Send by email">✉️ Изпрати по имейл</button>
   <button type="button" onclick="shareProtocol('viber')" data-bg="💬 Изпрати по Viber" data-en="💬 Send via Viber">💬 Изпрати по Viber</button>
+  <button type="button" onclick="createSigningLink()" data-bg="✍️ Линк за подпис" data-en="✍️ Signing link">✍️ Линк за подпис</button>
 </div>
 
 </main>
@@ -982,6 +983,24 @@ function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length)
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
+
+async function createSigningLink(){
+  if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
+  if(!currentUser||!currentCompanyId){alert(lang==='bg'?'За защитен линк за подпис е необходим вход и облачен архив.':'Sign in and use the cloud archive to create a secure signing link.');return;}
+  const pno=$('pno').value.trim();
+  if(!pno){alert(lang==='bg'?'Протоколът няма номер.':'Protocol number is missing.');return;}
+  try{
+    const {data,error}=await sb.rpc('create_protocol_signing_request',{p_pno:pno,p_company_id:currentCompanyId});
+    if(error)throw error;
+    const token=typeof data==='string'?data:(data?.token||data?.create_protocol_signing_request);
+    if(!token)throw new Error('Не е върнат токен за подписване.');
+    const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'sign.html?token='+encodeURIComponent(token);
+    if(navigator.share){try{await navigator.share({title:'Подписване на газов протокол',text:'Моля, отворете линка и подпишете протокола.',url:link});return;}catch(e){if(e?.name==='AbortError')return;}}
+    if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(link);alert((lang==='bg'?'Линкът за подпис е копиран. Изпратете го по имейл или Viber:\n':'Signing link copied. Send it by email or Viber:\n')+link);}
+    else prompt(lang==='bg'?'Копирайте и изпратете този линк:':'Copy and send this link:',link);
+  }catch(e){console.error(e);alert((lang==='bg'?'Не успях да създам линк. Проверете дали сте изпълнили SQL настройката в Supabase. ':'Could not create link. Check that the Supabase SQL setup has been applied. ')+(e?.message||''));}
+}
+
 async function shareProtocol(channel='viber'){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;} await shareFile(channel);}
 const ctx=$('canvas').getContext('2d');let drawing=false;
 function pos(e){let r=$('canvas').getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*900/r.width,y:(p.clientY-r.top)*340/r.height}}
