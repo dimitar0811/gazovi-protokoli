@@ -649,6 +649,22 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 <div id="archiveModal" style="display: none;"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div id="archiveList"><div class="archive-item"><div class="archive-meta"><b>GP-8102026 г-1665</b><br>08.10.2026 г. — 1<br><small>Гр. Петрич с.Скрът</small></div><div class="archive-actions"><button onclick="openArchived(0)">Отвори</button><button class="secondary" onclick="deleteArchived(0)">Изтрий</button></div></div></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
 
 
+
+<!-- Поправка: липсващите елементи прекъсваха целия JavaScript при зареждане. -->
+<input id="datePicker" type="date" class="date-native" aria-label="Избор на дата">
+<div id="sigModal" role="dialog" aria-modal="true" aria-labelledby="sigTitle">
+  <div class="modal">
+    <h3 id="sigTitle">Подпис</h3>
+    <p>Подпишете с пръст или мишка.</p>
+    <canvas id="canvas" width="900" height="340"></canvas>
+    <div class="actions">
+      <button type="button" class="secondary" onclick="clearSig()">Изчисти</button>
+      <button type="button" onclick="saveSig()">Запази подписа</button>
+      <button type="button" class="secondary" onclick="closeSig()">Отказ</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const ids=['pno','date','client','techName','clientName','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes'];
