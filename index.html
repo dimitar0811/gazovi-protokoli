@@ -847,7 +847,7 @@ function prepareKeyboard(){
 function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
-async async function save(){
+async function save(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
   if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
   if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);
