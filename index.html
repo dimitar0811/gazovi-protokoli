@@ -649,11 +649,13 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
     <button id="authMainBtn" onclick="authMain()">Вход</button>
     <button id="authToggleBtn" onclick="toggleAuthMode()">Регистрация</button>
     <button onclick="continueOffline()">Работа без вход (офлайн)</button>
+    <button type="button" class="secondary" onclick="shareApp()">Сподели приложението</button>
     <div id="authMsg"></div>
   </div>
 </div>
 <div id="userBar" class="user-bar" style="display:none">
   <span id="userEmail"></span>
+  <button type="button" class="secondary" onclick="shareApp()">Сподели приложението</button>
   <button onclick="logout()">Изход</button>
 </div>
 <main>
@@ -873,6 +875,22 @@ function changeProtocolZoom(delta){
 }
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
+async function shareApp(){
+  const appUrl='https://dimitar0811.github.io/gazovi-protokoli/';
+  const shareData={title:'Газови протоколи',text:'Отвори приложението за газови протоколи.',url:appUrl};
+  try{
+    if(navigator.share){await navigator.share(shareData);return;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(appUrl);
+      alert('Линкът към приложението е копиран. Изпрати го по Viber или имейл:\\n'+appUrl);
+      return;
+    }
+    prompt('Копирай и изпрати този линк:',appUrl);
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    prompt('Копирай и изпрати този линк:',appUrl);
+  }
+}
 function setLang(x){
   lang=x;
   document.documentElement.lang=x;
