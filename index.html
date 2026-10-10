@@ -1010,17 +1010,37 @@ function enableMovableZoomControls(){
 }
 
 enableMovableZoomControls();
+let printLayoutRestore=null;
 function printProtocol(){
   saveSilently();
-  // Ensure every field's current value is represented when the browser creates the PDF.
+  // Preserve the live form values and expand all sections in the printed protocol.
   document.querySelectorAll('#sheet input').forEach(el=>{
     if(el.type==='date' && el.value) el.setAttribute('value',el.value);
     else if(el.type!=='date') el.setAttribute('value',el.value);
   });
   document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
   document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
+
+  // Fit the complete protocol onto one A4 page when possible.
+  const sheet=document.querySelector('#sheet');
+  if(sheet){
+    const oldStyle={zoom:sheet.style.zoom,width:sheet.style.width};
+    printLayoutRestore=()=>{sheet.style.zoom=oldStyle.zoom;sheet.style.width=oldStyle.width;printLayoutRestore=null;};
+    let scale=1;
+    for(let i=0;i<4;i++){
+      sheet.style.zoom=String(scale);
+      sheet.style.width=(100/scale)+'%';
+      const height=sheet.scrollHeight;
+      const next=Math.min(1,1010/Math.max(height,1));
+      if(Math.abs(next-scale)<0.015) break;
+      scale=next;
+    }
+    sheet.style.zoom=String(scale);
+    sheet.style.width=(100/scale)+'%';
+  }
   window.print();
 }
+window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutRestore();});
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
