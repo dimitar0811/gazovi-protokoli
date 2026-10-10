@@ -594,7 +594,7 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
  body{zoom:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:12px!important}
  #zoomControls{display:none!important} header,.no-print,.user-bar,#archiveModal,#authGate{display:none!important}
  main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
- #sheet,.sheet{zoom:1!important;width:100%!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+ #sheet,.sheet{zoom:var(--print-scale,1)!important;width:calc(100% / var(--print-scale,1))!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
  .section{margin:5px 0!important;padding:6px!important;break-inside:auto!important;page-break-inside:auto!important}
  .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;row-gap:8px!important}
  .grid>.span2,.grid>.span3,.grid>.span4{grid-column:span 1!important;min-width:0!important}
@@ -1024,10 +1024,11 @@ function printProtocol(){
   // Fit the complete protocol onto one A4 page when possible.
   const sheet=document.querySelector('#sheet');
   if(sheet){
-    const oldStyle={zoom:sheet.style.zoom,width:sheet.style.width};
-    printLayoutRestore=()=>{sheet.style.zoom=oldStyle.zoom;sheet.style.width=oldStyle.width;printLayoutRestore=null;};
+    const oldStyle={zoom:sheet.style.zoom,width:sheet.style.width,scale:sheet.style.getPropertyValue('--print-scale')};
+    printLayoutRestore=()=>{sheet.style.zoom=oldStyle.zoom;sheet.style.width=oldStyle.width;if(oldStyle.scale)sheet.style.setProperty('--print-scale',oldStyle.scale);else sheet.style.removeProperty('--print-scale');printLayoutRestore=null;};
     let scale=1;
     for(let i=0;i<4;i++){
+      sheet.style.setProperty('--print-scale',String(scale));
       sheet.style.zoom=String(scale);
       sheet.style.width=(100/scale)+'%';
       const height=sheet.scrollHeight;
@@ -1035,6 +1036,7 @@ function printProtocol(){
       if(Math.abs(next-scale)<0.015) break;
       scale=next;
     }
+    sheet.style.setProperty('--print-scale',String(scale));
     sheet.style.zoom=String(scale);
     sheet.style.width=(100/scale)+'%';
   }
