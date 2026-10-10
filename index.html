@@ -586,7 +586,7 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 .auth-card{background:#fff;width:min(420px,100%);border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center}
 .auth-card h2{margin:0 0 6px}.auth-card p{margin:0 0 18px;color:#555}.auth-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:13px;border:1px solid #bbb;border-radius:8px;font-size:16px}.auth-card button{width:100%;margin-top:8px;padding:12px;border-radius:8px;font-size:16px}.auth-card #authMsg{min-height:24px;margin-top:12px;font-size:14px}.user-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:8px 12px;background:#f2f2f2;font-size:13px}.user-bar button{width:auto;margin:0;padding:6px 12px}
 </style>
-<style>.date-wrap{display:flex;align-items:center;gap:4px}.date-wrap input[type=text]{flex:1}.date-btn{padding:6px 8px;cursor:pointer}.date-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}</style><style>input,textarea,button{font-family:Arial,sans-serif}input:focus,textarea:focus{outline:2px solid #1769aa}</style>
+<style>.date-wrap{display:flex;align-items:center;gap:4px}.date-wrap input[type=text]{flex:1}.date-btn{padding:6px 8px;min-width:38px;min-height:34px;cursor:pointer;background:#1769aa;color:#fff;border-radius:6px;flex-shrink:0}.date-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}</style><style>input,textarea,button{font-family:Arial,sans-serif}input:focus,textarea:focus{outline:2px solid #1769aa}</style>
 <style id="a4-one-page-print">
 @page{size:A4 portrait;margin:8mm}
 @media print{
@@ -682,7 +682,7 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
 </div>
 
 <div class="sheet" id="sheet">
-<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span style="display:inline-flex;align-items:center;gap:4px"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"></span></small></div>
+<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span class="date-wrap"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('date')">📅</button></span></small></div>
 
 <div class="section"><h3 data-bg="Клиент и обект" data-en="CLIENT AND SITE">Клиент и обект</h3><div class="grid">
 <div class="span2"><label data-bg="Клиент / фирма" data-en="Client / Company">Клиент / фирма</label><input id="client"></div>
@@ -695,19 +695,19 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
 <div class="section"><h3 data-bg="Коректор" data-en="CORRECTOR">Коректор</h3><div class="grid">
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="cbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="cs"></div>
-<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
 <div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="c1" type="number" step="any"></div>
 <div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="c2" type="number" step="any"></div>
-<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
 </div><div class="calc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">10.000 m³</b></div></div>
 
 <div class="section"><h3 data-bg="Разходомер" data-en="GAS METER">Разходомер</h3><div class="grid">
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="mbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="ms"></div>
-<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
 <div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
 <div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
-<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
 </div><div class="calc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
 
 <div class="section"><h3 data-bg="Забележки / заключение" data-en="NOTES / CONCLUSION">Забележки / заключение</h3><textarea id="notes"></textarea></div>
