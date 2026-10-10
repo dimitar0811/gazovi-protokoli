@@ -674,6 +674,7 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
     <button type="button" onclick="changePdfZoom(-0.2)">−</button>
     <button type="button" onclick="changePdfZoom(0)">100%</button>
     <button type="button" onclick="changePdfZoom(0.2)">＋</button>
+    <button type="button" onclick="printCurrentPdf()">🖨️ Печат</button>
     <button type="button" onclick="downloadCurrentPdf()">Запази PDF</button>
     <button type="button" onclick="closePdfViewer()">Затвори ✕</button>
   </div>
@@ -724,7 +725,7 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
   <button type="button" onclick="newProtocol()" data-bg="Нов протокол" data-en="New protocol">Нов протокол</button>
   <button type="button" onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
   <button type="button" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
-  <button type="button" onclick="printProtocol()" data-bg="🖨️ Печат на протокола" data-en="🖨️ Print protocol">🖨️ Печат на протокола</button>
+  <button type="button" onclick="openPdfViewer()" data-bg="🖨️ Преглед и печат" data-en="🖨️ Preview and print">🖨️ Преглед и печат</button>
   <button type="button" onclick="shareProtocol('email')" data-bg="✉️ Изпрати по имейл" data-en="✉️ Send by email">✉️ Изпрати по имейл</button>
   <button type="button" onclick="shareProtocol('viber')" data-bg="💬 Изпрати по Viber" data-en="💬 Send via Viber">💬 Изпрати по Viber</button>
   <button type="button" onclick="createSigningLink()" data-bg="✍️ Линк за подпис" data-en="✍️ Signing link">✍️ Линк за подпис</button>
@@ -995,6 +996,7 @@ function applyPdfZoom(){
 }
 function changePdfZoom(delta){pdfZoom=delta===0?1:Math.max(.6,Math.min(3,pdfZoom+delta));applyPdfZoom();}
 function downloadCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const u=URL.createObjectURL(currentPdfBlob),a=document.createElement('a');a.href=u;a.download='gazov-protokol.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+function printCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const url=URL.createObjectURL(currentPdfBlob),frame=document.createElement('iframe');frame.style.position='fixed';frame.style.right='0';frame.style.bottom='0';frame.style.width='1px';frame.style.height='1px';frame.style.border='0';frame.style.opacity='0';frame.setAttribute('aria-hidden','true');frame.onload=()=>{try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){alert('Не успях да отворя печата. Използвай „Запази PDF“ и отпечатай запазения файл.');}setTimeout(()=>{frame.remove();URL.revokeObjectURL(url);},60000);};frame.src=url;document.body.appendChild(frame);}
 function closePdfViewer(){$('pdfViewerModal').style.display='none';$('pdfPages').innerHTML='';currentPdfBlob=null;pdfDoc=null;}
 (function enablePdfPinch(){
  const v=document.getElementById('pdfViewport');if(!v)return;let startDist=0,startZoom=1;
