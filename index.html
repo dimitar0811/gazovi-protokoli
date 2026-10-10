@@ -923,6 +923,33 @@ $('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-di
 
 let currentPdfBlob=null,pdfZoom=1,pdfBaseWidth=0,pdfDoc=null;
 function loadExternalScript(src){return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>x.src===src);if(existing){if(existing.dataset.loaded==='yes')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}const sc=document.createElement('script');sc.src=src;sc.onload=()=>{sc.dataset.loaded='yes';resolve()};sc.onerror=()=>reject(new Error('Не може да се зареди библиотека за PDF'));document.head.appendChild(sc);});}
+
+// Build a single-page A4 PDF by rendering the complete protocol once and fitting it to one page.
+async function buildOnePagePdf(source){
+ await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+ await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+ if(!window.html2canvas||!window.jspdf?.jsPDF)throw new Error('PDF библиотеките не са налични. Провери интернет връзката.');
+ const clone=source.cloneNode(true);
+ clone.classList.add('pdf-export-compact');
+ clone.querySelectorAll('input').forEach(el=>{const original=el.id?source.querySelector('#'+CSS.escape(el.id)):null;if(original){el.value=original.value;el.setAttribute('value',original.value);}});
+ clone.querySelectorAll('textarea').forEach(el=>{const original=el.id?source.querySelector('#'+CSS.escape(el.id)):null;if(original)el.value=original.value;el.textContent=el.value;});
+ clone.querySelectorAll('details').forEach(el=>el.open=true);
+ clone.querySelectorAll('button').forEach(el=>el.remove());
+ const host=document.createElement('div');
+ host.style.cssText='position:fixed;left:-10000px;top:0;width:194mm;background:#fff;z-index:-1;overflow:visible;';
+ const style=document.createElement('style');
+ style.textContent='.pdf-export-compact{width:194mm!important;max-width:194mm!important;box-sizing:border-box!important;padding:2mm!important;margin:0!important;background:#fff!important;color:#111!important;font-family:Arial,sans-serif!important;font-size:9px!important;line-height:1.12!important;box-shadow:none!important;border:0!important}.pdf-export-compact *{box-sizing:border-box!important;break-inside:avoid!important;page-break-inside:avoid!important}.pdf-export-compact .section{margin:2px 0!important;padding:3px!important}.pdf-export-compact .title{padding:0 0 2px!important}.pdf-export-compact h1,.pdf-export-compact h2,.pdf-export-compact h3,.pdf-export-compact p{margin:2px 0!important;line-height:1.12!important}.pdf-export-compact h2{font-size:12px!important}.pdf-export-compact h3{font-size:10px!important}.pdf-export-compact label{font-size:8px!important;margin-bottom:1px!important;line-height:1.1!important}.pdf-export-compact input,.pdf-export-compact textarea,.pdf-export-compact select{font-size:8px!important;line-height:1.1!important;min-height:14px!important;height:auto!important;padding:2px!important;margin:0!important;border:1px solid #555!important;background:#fff!important;color:#111!important}.pdf-export-compact textarea{min-height:18px!important;white-space:pre-wrap!important}.pdf-export-compact .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;row-gap:3px!important}.pdf-export-compact .grid>.span2,.pdf-export-compact .grid>.span3,.pdf-export-compact .grid>.span4{grid-column:span 1!important;min-width:0!important}.pdf-export-compact .grid>.span6{grid-column:1/-1!important}.pdf-export-compact .footer,.pdf-export-compact .signatures,.pdf-export-compact .signature{break-inside:avoid!important;page-break-inside:avoid!important}.pdf-export-compact img{max-width:100%!important}.pdf-export-compact .compact-fields{padding-top:1px!important}.pdf-export-compact details{border:0!important;padding:0!important;margin:1px 0!important;background:transparent!important}.pdf-export-compact details>summary{display:none!important}';
+ host.appendChild(style);host.appendChild(clone);document.body.appendChild(host);
+ try{
+  const canvas=await window.html2canvas(clone,{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff',width:clone.scrollWidth,height:clone.scrollHeight,windowWidth:clone.scrollWidth,scrollX:0,scrollY:0});
+  const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+  const margin=5,pageW=210,pageH=297,availableW=pageW-margin*2,availableH=pageH-margin*2;
+  const ratio=Math.min(availableW/canvas.width,availableH/canvas.height);
+  const drawW=canvas.width*ratio,drawH=canvas.height*ratio;
+  pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pageW-drawW)/2,margin,drawW,drawH,undefined,'FAST');
+  return pdf.output('arraybuffer');
+ }finally{host.remove();}
+}
 async function openPdfViewer(){
  const modal=$('pdfViewerModal'),status=$('pdfStatus'),viewport=$('pdfViewport'),pages=$('pdfPages');
  modal.style.display='flex';status.style.display='block';status.textContent='Подготовка на PDF…';viewport.style.display='none';pages.innerHTML='';currentPdfBlob=null;pdfDoc=null;pdfZoom=1;
@@ -936,7 +963,7 @@ async function openPdfViewer(){
   if(!window.html2pdf||!window.pdfjsLib)throw new Error('PDF библиотеките не са налични. Провери интернет връзката.');
   window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   status.textContent='Създаване на PDF…';
-  const buffer=await window.html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:0.96},html2canvas:{scale:1.5,useCORS:true,logging:false,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('sheet')).outputPdf('arraybuffer');
+  const buffer=await buildOnePagePdf($('sheet'));
   currentPdfBlob=new Blob([buffer],{type:'application/pdf'});
   pdfDoc=await window.pdfjsLib.getDocument({data:new Uint8Array(buffer)}).promise;
   status.style.display='none';viewport.style.display='block';
@@ -1045,7 +1072,7 @@ async function shareFile(channel='viber'){
     document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
     await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
     if(!window.html2pdf)throw new Error('PDF библиотеката не е заредена.');
-    const buffer=await window.html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:0.96},html2canvas:{scale:1.5,useCORS:true,logging:false,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('sheet')).outputPdf('arraybuffer');
+    const buffer=await buildOnePagePdf($('sheet'));
     const blob=new Blob([buffer],{type:'application/pdf'});
     const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
     const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
