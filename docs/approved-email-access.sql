@@ -139,7 +139,7 @@ begin
     'role', coalesce(v_role, 'user')
   );
 end;
-$;
+$$;
 
 revoke all on function public.admin_get_approved_email_status(text) from public, anon;
 grant execute on function public.admin_get_approved_email_status(text) to authenticated;
