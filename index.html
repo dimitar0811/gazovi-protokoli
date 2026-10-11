@@ -1199,6 +1199,7 @@ async function sendAccountingEmail(){
 async function shareAccountingPdf(email){
  let url=null;
  try{
+   const accountingLink=await createAccountingLink();if(!accountingLink)return;
    document.querySelectorAll('#sheet input').forEach(el=>{if(el.type==='date'&&el.value)el.setAttribute('value',el.value);else if(el.type!=='date')el.setAttribute('value',el.value);});
    document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
    document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
@@ -1212,7 +1213,7 @@ async function shareAccountingPdf(email){
    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
    const clientName=($('client').value||'').trim();
     const subject=encodeURIComponent('Газов протокол '+($('pno').value||'')+' — '+clientName);
-    const body=encodeURIComponent('Здравейте,\n\nИзпращам готов протокол за проверка и фактуриране.\n\nКлиент: '+clientName+'\nНомер: '+($('pno').value||'')+'\nОбект: '+(($('site').value||'').trim()||'—')+'\nДата: '+($('date').value||'')+'\n\nЛинк: '+window.location.href+'\n\nГазов протокол '+($('pno').value||'')+' — '+clientName+'\n\nПоздрави!');
+    const body=encodeURIComponent('Здравейте,\r\n\r\nПротокол за фактуриране.\r\n\r\nДата: '+(($('date').value||'').trim()||'—')+'\r\nКлиент: '+clientName+'\r\nНомер: '+($('pno').value||'')+'\r\n\r\nЛинк за фактуриране:\r\n'+accountingLink+'\r\n\r\nПоздрави!');
    window.location.href='mailto:'+email+'?subject='+subject+'&body='+body;
    setTimeout(()=>alert('PDF файлът е изтеглен. В отвореното писмо прикачи файла '+filename+' от папка „Изтегляния“, след което изпрати имейла.'),900);
  }catch(e){
@@ -1226,24 +1227,27 @@ async function shareProtocol(channel='viber'){
  if(channel==='viber'){await shareAccountingLink();return;}
  await shareFile(channel);
 }
+async function createAccountingLink(){
+ if(!currentUser){alert('За защитен линк за фактуриране първо влезте в приложението.');return null;}
+ if(!currentCompanyId && !(await ensureCompany())){alert('Не е избран фирмен архив.');return null;}
+ const clientName=($('client').value||'').trim(),pno=($('pno').value||'').trim();
+ if(!clientName||!pno){alert('Попълнете клиента и номера на протокола.');return null;}
+ const d=collect();d.savedAt=Date.now();
+ if(!(await saveCloud(d)))return null;
+ const {data,error}=await sb.rpc('create_protocol_accounting_request',{p_pno:pno,p_company_id:currentCompanyId});
+ if(error)throw error;
+ const token=typeof data==='string'?data:(data?.token||data?.create_protocol_accounting_request);
+ if(!token)throw new Error('Не е върнат защитен линк.');
+ return location.origin+location.pathname.replace(/[^/]*$/,'')+'accounting.html?token='+encodeURIComponent(token);
+}
 async function shareAccountingLink(){
- if(!currentUser){alert('За защитен линк за фактуриране първо влезте в приложението.');return;}
- if(!currentCompanyId && !(await ensureCompany())){alert('Не е избран фирмен архив.');return;}
  const clientName=($('client').value||'').trim(),pno=($('pno').value||'').trim(),protocolDate=($('date').value||'').trim();
- if(!clientName||!pno){alert('Попълнете клиента и номера на протокола.');return;}
  try{
-  const d=collect();d.savedAt=Date.now();
-  if(!(await saveCloud(d)))return;
-  const {data,error}=await sb.rpc('create_protocol_accounting_request',{p_pno:pno,p_company_id:currentCompanyId});
-  if(error)throw error;
-  const token=typeof data==='string'?data:(data?.token||data?.create_protocol_accounting_request);
-  if(!token)throw new Error('Не е върнат защитен линк.');
-  const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'accounting.html?token='+encodeURIComponent(token);
-  const message='Дата: '+(protocolDate||'—')+'\\nКлиент: '+clientName+'\\nНомер: '+pno+'\\n\\nПротокол за фактуриране\\n\\n'+link;
-  // Copy plain text instead of using the native share sheet, which may group the preview and surrounding text into one tappable card.
-  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert('Копирани са датата, клиентът, номерът и отделният линк. Поставете съобщението във Viber.\\n\\n'+message);}
+  const link=await createAccountingLink();if(!link)return;
+  const message='Дата: '+(protocolDate||'—')+'\nКлиент: '+clientName+'\nНомер: '+pno+'\n\nПротокол за фактуриране\n'+link;
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert('Съобщението е копирано. Поставете го във Viber и изпратете. Проверете, че линкът е на отделен ред.\n\n'+message);}
   else prompt('Копирайте съобщението и го изпратете във Viber:',message);
- }catch(e){console.error(e);alert('Не успях да създам линк за фактуриране. Проверете дали сте изпълнили docs/protocol-accounting-setup.sql в Supabase.\\n'+(e?.message||''));}
+ }catch(e){console.error(e);alert('Не успях да създам линк за фактуриране. Проверете настройката в Supabase.\n'+(e?.message||''));}
 }
 const ctx=$('canvas').getContext('2d');let drawing=false;
 function pos(e){let r=$('canvas').getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*900/r.width,y:(p.clientY-r.top)*340/r.height}}
