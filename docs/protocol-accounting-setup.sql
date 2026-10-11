@@ -32,7 +32,13 @@ begin
     raise exception 'Липсва номер на протокол или фирма.';
   end if;
 
-  select to_jsonb(p) into v_snapshot
+  select jsonb_build_object(
+    'pno', p.pno, 'date', p.date, 'client', p.client, 'eik', p.eik,
+    'tech', p.tech, 'tech_name', p.tech_name, 'site', p.site, 'contact', p.contact,
+    'cbm', p.cbm, 'cs', p.cs, 'cd', p.cd, 'c1', p.c1, 'c2', p.c2, 'cv', p.cv,
+    'mbm', p.mbm, 'ms', p.ms, 'md', p.md, 'm1', p.m1, 'm2', p.m2, 'mv', p.mv,
+    'notes', p.notes, 'client_name', p.client_name, 'tech_sig', p.tech_sig, 'client_sig', p.client_sig
+  ) into v_snapshot
   from public.protocols p
   where p.company_id = p_company_id
     and p.pno = p_pno
