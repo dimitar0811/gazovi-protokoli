@@ -108,6 +108,42 @@ $$;
 revoke all on function public.admin_set_approved_email(text, boolean, text) from public, anon;
 grant execute on function public.admin_set_approved_email(text, boolean, text) to authenticated;
 
+create or replace function public.admin_get_approved_email_status(p_email text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_admin_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  v_approved boolean;
+  v_role text;
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.approved_emails a
+    where lower(a.email) = v_admin_email
+      and a.approved = true
+      and a.role = 'admin'
+  ) then
+    raise exception 'Нямате администраторски права.';
+  end if;
+
+  select a.approved, a.role into v_approved, v_role
+  from public.approved_emails a
+  where lower(a.email) = lower(trim(p_email));
+
+  return jsonb_build_object(
+    'email', lower(trim(p_email)),
+    'found', v_approved is not null,
+    'approved', coalesce(v_approved, false),
+    'role', coalesce(v_role, 'user')
+  );
+end;
+$;
+
+revoke all on function public.admin_get_approved_email_status(text) from public, anon;
+grant execute on function public.admin_get_approved_email_status(text) to authenticated;
+
 -- Restrictive policy adds an approval gate on top of existing protocol policies.
 -- Existing company/archive policies are preserved.
 drop policy if exists approved_email_gate on public.protocols;
