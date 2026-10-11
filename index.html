@@ -1165,8 +1165,8 @@ async function createSigningLink(){
     const protocolDate=($('date').value||'').trim();
     const shareTitle='Протокол '+pno+' — '+clientName;
     const shareText='Протокол за подписване\nКлиент: '+clientName+'\nНомер: '+pno+'\nДата: '+(protocolDate||'—')+'\n\nОтворете линка, за да прегледате и подпишете протокола:';
-    const message=shareText+'\\n'+link;
-    if(navigator.share){try{await navigator.share({title:shareTitle,text:message});return;}catch(e){if(e?.name==='AbortError')return;}}
+    const message=shareText+'\n'+link;
+    if(navigator.share){try{await navigator.share({title:shareTitle,text:shareText,url:link});return;}catch(e){if(e?.name==='AbortError')return;}}
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert((lang==='bg'?'Линкът и данните за протокола са копирани. Изпратете ги по имейл или Viber:\n':'Protocol details and link copied. Send by email or Viber:\n')+message);}
     else prompt(lang==='bg'?'Копирайте текста с данните и линка:':'Copy the protocol details and link:',message);
   }catch(e){console.error(e);alert((lang==='bg'?'Не успях да създам линк. Проверете дали сте изпълнили SQL настройката в Supabase. ':'Could not create link. Check that the Supabase SQL setup has been applied. ')+(e?.message||''));}
@@ -1210,8 +1210,9 @@ async function shareAccountingPdf(email){
    const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
    url=URL.createObjectURL(blob);
    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-   const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
-   const body=encodeURIComponent('Здравейте,\\n\\nИзпращам готов протокол за проверка и фактуриране.\\n\\nНомер: '+($('pno').value||'')+'\\nОбект: '+($('site').value||'')+'\\nДата: '+($('date').value||'')+'\\n\\nПоздрави');
+   const clientName=($('client').value||'').trim();
+    const subject=encodeURIComponent('Газов протокол '+($('pno').value||'')+' — '+clientName);
+    const body=encodeURIComponent('Здравейте,\n\nИзпращам готов протокол за проверка и фактуриране.\n\nКлиент: '+clientName+'\nНомер: '+($('pno').value||'')+'\nОбект: '+($('site').value||'')+'\nДата: '+($('date').value||'')+'\n\nПоздрави');
    window.location.href='mailto:'+email+'?subject='+subject+'&body='+body;
    setTimeout(()=>alert('PDF файлът е изтеглен. В отвореното писмо прикачи файла '+filename+' от папка „Изтегляния“, след което изпрати имейла.'),900);
  }catch(e){
@@ -1246,15 +1247,20 @@ async function shareFile(channel='viber'){
     const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
     const file=new File([blob],filename,{type:'application/pdf'});
     // Native share sheet can attach the actual PDF to email or messaging apps.
+    const clientName=($('client').value||'').trim();
+    const protocolNumber=($('pno').value||'').trim();
+    const protocolDate=($('date').value||'').trim();
+    const shareTitle='Газов протокол '+protocolNumber+' — '+clientName;
+    const shareText='Клиент: '+clientName+'\nНомер: '+protocolNumber+'\nДата: '+(protocolDate||'—')+'\nОбект: '+(($('site').value||'').trim()||'—')+'\n\nМоля, прегледайте и подпишете приложения PDF протокол.';
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({title:'Газов протокол',text:'Газов протокол за подпис. Моля, подпишете документа и ми върнете подписания PDF.',files:[file]});
+      await navigator.share({title:shareTitle,text:shareText,files:[file]});
       return;
     }
     url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
     if(channel==='email'){
-      const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
-      const body=encodeURIComponent('Здравейте,\\n\\nИзпращам газов протокол за преглед и подпис.\\n\\nПоздрави');
+      const subject=encodeURIComponent('Газов протокол '+protocolNumber+' — '+clientName);
+      const body=encodeURIComponent('Здравейте,\n\nИзпращам газов протокол за преглед и подпис.\n\nКлиент: '+clientName+'\nНомер: '+protocolNumber+'\nДата: '+(protocolDate||'—')+'\nОбект: '+(($('site').value||'').trim()||'—')+'\n\nПоздрави');
       window.location.href='mailto:?subject='+subject+'&body='+body;
       setTimeout(()=>alert(lang==='bg'?'Този браузър не поддържа автоматично прикачване. PDF е изтеглен. В отвореното писмо натисни „Прикачи файл“ и избери най-новия Protokol-…pdf от „Изтегляния“.':'This browser cannot attach files automatically. Attach the downloaded PDF to the email.'),700);
     }else{
