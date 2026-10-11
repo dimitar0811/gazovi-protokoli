@@ -1164,9 +1164,9 @@ async function createSigningLink(){
     const clientName=($('client').value||'').trim();
     const protocolDate=($('date').value||'').trim();
     const shareTitle='Протокол '+pno+' — '+clientName;
-    const shareText='Протокол за подписване\\nКлиент: '+clientName+'\\nНомер: '+pno+'\\nДата: '+(protocolDate||'—')+'\\n\\nОтворете линка, за да прегледате и подпишете протокола:';
+    const shareText='Протокол за подписване\nКлиент: '+clientName+'\nНомер: '+pno+'\nДата: '+(protocolDate||'—')+'\n\nОтворете линка, за да прегледате и подпишете протокола:';
     const message=shareText+'\\n'+link;
-    if(navigator.share){try{await navigator.share({title:shareTitle,text:shareText,url:link});return;}catch(e){if(e?.name==='AbortError')return;}}
+    if(navigator.share){try{await navigator.share({title:shareTitle,text:message});return;}catch(e){if(e?.name==='AbortError')return;}}
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert((lang==='bg'?'Линкът и данните за протокола са копирани. Изпратете ги по имейл или Viber:\n':'Protocol details and link copied. Send by email or Viber:\n')+message);}
     else prompt(lang==='bg'?'Копирайте текста с данните и линка:':'Copy the protocol details and link:',message);
   }catch(e){console.error(e);alert((lang==='bg'?'Не успях да създам линк. Проверете дали сте изпълнили SQL настройката в Supabase. ':'Could not create link. Check that the Supabase SQL setup has been applied. ')+(e?.message||''));}
