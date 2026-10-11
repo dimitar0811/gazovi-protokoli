@@ -32,7 +32,10 @@ test.beforeEach(async ({ page }) => {
     sessionStorage.clear();
   });
   await page.reload();
-  await page.getByRole('button', { name: /Работа без вход/i }).click();
+  // These tests exercise the protocol UI with a mocked Supabase client.
+  // The current app intentionally requires sign-in, so hide the sign-in gate
+  // for protocol-only tests instead of clicking a removed "offline mode" button.
+  await page.locator('#authGate').evaluate(el => { el.style.display = 'none'; });
   await expect(page.locator('#authGate')).toBeHidden();
   // Compact mobile layout keeps client details collapsed initially; open them
   // before interacting with client/site fields.
@@ -80,7 +83,7 @@ test('saved protocol survives reload and can be opened from archive', async ({ p
   await page.getByRole('button', { name: 'Запиши' }).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('gasProtocolV2'))).toContain('Фирма за повторение');
   await page.reload();
-  await page.getByRole('button', { name: /Работа без вход/i }).click();
+  await page.locator('#authGate').evaluate(el => { el.style.display = 'none'; });
   await page.locator('#client').evaluate(el => {
     const details = el.closest('details');
     if (details) details.open = true;
