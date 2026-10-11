@@ -39,8 +39,9 @@ test('date formatting and consumption calculations remain present', () => {
   assert.match(html, /num\('m2'\)-num\('m1'\)/);
 });
 
-test('login, registration and offline mode are available', () => {
+test('login and registration are available and access is checked after sign-in', () => {
   assert.match(html, /function authMain\(\)/);
   assert.match(html, /function toggleAuthMode\(\)/);
-  assert.match(html, /function continueOffline\(\)/);
+  assert.match(html, /check_app_access/);
+  assert.match(html, /function onSignedIn\(user\)/);
 });
