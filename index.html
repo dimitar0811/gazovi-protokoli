@@ -957,7 +957,8 @@ async function shareApp(){
 }
 function setLang(x){
   lang=x;
-  document.documentElement.lang=x;
+  // Do not change the document language when switching the app UI language;
+  // Android/Gboard may use the page language when deciding keyboard behavior.
   document.querySelectorAll('[data-bg]').forEach(e=>e.textContent=e.dataset[x]);
   document.querySelectorAll('[data-ph-bg]').forEach(e=>e.placeholder=e.dataset['ph-'+x]);
   // Keep the active text field focused; changing the app language must not
