@@ -1314,10 +1314,10 @@ async function createAccountingLink(){
  if(!clientName||!pno){alert('Попълнете клиента и номера на протокола.');return null;}
  const d=collect();d.savedAt=Date.now();
  if(!(await saveCloud(d)))return null;
- const {error:statusError}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',pno);
- if(statusError)throw new Error('Протоколът е записан, но не се добави в списъка за фактуриране. Изпълнете docs/invoicing-list-setup.sql в Supabase. '+statusError.message);
  const {data,error}=await sb.rpc('create_protocol_accounting_request',{p_pno:pno,p_company_id:currentCompanyId});
  if(error)throw error;
+ const {error:statusError}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',pno);
+ if(statusError)throw new Error('Защитеният линк е създаден, но протоколът не се добави в списъка за фактуриране. Изпълнете docs/invoicing-list-setup.sql в Supabase. '+statusError.message);
  const token=typeof data==='string'?data:(data?.token||data?.create_protocol_accounting_request);
  if(!token)throw new Error('Не е върнат защитен линк.');
  return location.origin+location.pathname.replace(/[^/]*$/,'')+'accounting.html?token='+encodeURIComponent(token);
