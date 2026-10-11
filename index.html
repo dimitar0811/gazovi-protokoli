@@ -658,6 +658,19 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
   <button type="button" class="secondary" onclick="shareApp()">Сподели приложението</button>
   <button onclick="logout()">Изход</button>
 </div>
+<div id="accessActionModal" role="dialog" aria-modal="true" aria-labelledby="accessActionTitle" style="display:none;position:fixed;inset:0;z-index:20000;background:#0008;align-items:center;justify-content:center;padding:18px">
+  <div style="background:#fff;color:#17202a;width:min(100%,420px);padding:22px;border-radius:14px;box-shadow:0 8px 32px #0005">
+    <h2 id="accessActionTitle" style="margin:0 0 10px">Управление на достъпа</h2>
+    <p>Имейл: <strong id="accessTargetEmail"></strong></p>
+    <p>Избери изрично какво да направиш:</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button type="button" onclick="changeEmailAccess(true)" style="background:#167a35;color:white">Разреши достъп</button>
+      <button type="button" onclick="changeEmailAccess(false)" style="background:#b00020;color:white">Блокирай достъп</button>
+      <button type="button" class="secondary" onclick="closeAccessModal()">Отказ / затвори</button>
+    </div>
+    <p id="accessActionMessage" role="status" style="margin-top:12px"></p>
+  </div>
+</div>
 <main>
 <div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:8px;background:#fff;border:2px solid #123b60;border-radius:12px;box-shadow:0 3px 12px #0003">
   <span id="zoomDragHandle" title="Плъзни, за да преместиш лупата" style="font-weight:bold;color:#123b60;cursor:move;touch-action:none;user-select:none;padding:4px">⠿ 🔍 ЛУПА</span>
@@ -831,19 +844,36 @@ async function onSignedIn(user){
     $('userEmail').textContent=(user.email||'')+' — локален режим';
   }
 }
-async function manageAccess(){
+let pendingAccessEmail='';
+function manageAccess(){
   if(currentUserRole!=='admin'){authMessage('Нямате администраторски права.');return;}
   const email=(window.prompt('Въведете точния имейл, чийто достъп искате да промените:')||'').trim().toLowerCase();
   if(!email)return;
-  const action=(window.prompt('Напишете РАЗРЕШИ, за да дадете достъп, или БЛОКИРАЙ, за да го премахнете.')||'').trim().toLocaleUpperCase('bg-BG');
-  if(action!=='РАЗРЕШИ'&&action!=='БЛОКИРАЙ'){alert('Няма промяна. Напишете точно РАЗРЕШИ или БЛОКИРАЙ.');return;}
-  const approved=action==='РАЗРЕШИ';
-  const {error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:'user'});
-  if(error){alert('Промяната не е записана: '+(error.message||'неизвестна грешка'));return;}
-  const {data:status,error:verifyError}=await sb.rpc('admin_get_approved_email_status',{p_email:email});
-  if(verifyError){alert('Командата е изпратена, но не успях да проверя резултата. Изпълнете обновения SQL файл в Supabase и опитайте отново.');return;}
-  if(!status?.found||status.approved!==approved){alert('Промяната не е потвърдена от базата данни. Проверете SQL настройките в Supabase.');return;}
-  alert((approved?'Достъпът е РАЗРЕШЕН за: ':'Достъпът е БЛОКИРАН за: ')+email+'\nПроверено в базата данни.');
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){alert('Моля, въведете валиден имейл.');return;}
+  pendingAccessEmail=email;
+  $('accessTargetEmail').textContent=email;
+  $('accessActionMessage').textContent='';
+  $('accessActionModal').style.display='flex';
+}
+function closeAccessModal(){
+  $('accessActionModal').style.display='none';
+  pendingAccessEmail='';
+}
+async function changeEmailAccess(approved){
+  if(currentUserRole!=='admin'||!pendingAccessEmail){alert('Няма избран имейл или липсват администраторски права.');return;}
+  const email=pendingAccessEmail;
+  const message=$('accessActionMessage');
+  message.textContent='Записване на промяната...';
+  message.style.color='#333';
+  const {data,error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:'user'});
+  if(error){
+    message.textContent='ГРЕШКА — промяната не е записана: '+(error.message||'неизвестна грешка');
+    message.style.color='#b00020';
+    return;
+  }
+  message.textContent=(approved?'Достъпът е РАЗРЕШЕН за: ':'ДОСТЪПЪТ Е БЛОКИРАН за: ')+email;
+  message.style.color=approved?'#167a35':'#b00020';
+  alert((approved?'Достъпът е разрешен за: ':'Достъпът е блокиран за: ')+email+'\\nСега потребителят трябва да излезе и да опита да влезе отново.');
 }
 async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 async function loadCloud(){
