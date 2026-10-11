@@ -1239,12 +1239,9 @@ async function shareAccountingLink(){
   const token=typeof data==='string'?data:(data?.token||data?.create_protocol_accounting_request);
   if(!token)throw new Error('Не е върнат защитен линк.');
   const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'accounting.html?token='+encodeURIComponent(token);
-  const message='Протокол за фактуриране\\n\\nКлиент: '+clientName+'\\nДата: '+(protocolDate||'—')+'\\nНомер: '+pno+'\\n\\n'+link;
-  if(navigator.share){
-   try{await navigator.share({title:'Протокол за фактуриране — '+clientName,text:message});return;}
-   catch(e){if(e?.name==='AbortError')return;}
-  }
-  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert('Текстът с името на клиента, датата, номера и линка е копиран. Поставете го във Viber.\\n\\n'+message);}
+  const message='Дата: '+(protocolDate||'—')+'\\nКлиент: '+clientName+'\\nНомер: '+pno+'\\n\\nПротокол за фактуриране\\n\\n'+link;
+  // Copy plain text instead of using the native share sheet, which may group the preview and surrounding text into one tappable card.
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert('Копирани са датата, клиентът, номерът и отделният линк. Поставете съобщението във Viber.\\n\\n'+message);}
   else prompt('Копирайте съобщението и го изпратете във Viber:',message);
  }catch(e){console.error(e);alert('Не успях да създам линк за фактуриране. Проверете дали сте изпълнили docs/protocol-accounting-setup.sql в Supabase.\\n'+(e?.message||''));}
 }
