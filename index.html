@@ -833,12 +833,17 @@ async function onSignedIn(user){
 }
 async function manageAccess(){
   if(currentUserRole!=='admin'){authMessage('Нямате администраторски права.');return;}
-  const email=(window.prompt('Имейл на потребителя, когото искате да разрешите или блокирате:')||'').trim().toLowerCase();
+  const email=(window.prompt('Въведете точния имейл, чийто достъп искате да промените:')||'').trim().toLowerCase();
   if(!email)return;
-  const approved=window.confirm('Натиснете OK, за да разрешите този имейл. Натиснете Cancel, за да блокирате достъпа.');
+  const action=(window.prompt('Напишете РАЗРЕШИ, за да дадете достъп, или БЛОКИРАЙ, за да го премахнете.')||'').trim().toLocaleUpperCase('bg-BG');
+  if(action!=='РАЗРЕШИ'&&action!=='БЛОКИРАЙ'){alert('Няма промяна. Напишете точно РАЗРЕШИ или БЛОКИРАЙ.');return;}
+  const approved=action==='РАЗРЕШИ';
   const {error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:'user'});
-  if(error){alert(error.message||'Неуспешна промяна на достъпа.');return;}
-  alert((approved?'Разрешен достъп за: ':'Блокиран достъп за: ')+email);
+  if(error){alert('Промяната не е записана: '+(error.message||'неизвестна грешка'));return;}
+  const {data:status,error:verifyError}=await sb.rpc('admin_get_approved_email_status',{p_email:email});
+  if(verifyError){alert('Командата е изпратена, но не успях да проверя резултата. Изпълнете обновения SQL файл в Supabase и опитайте отново.');return;}
+  if(!status?.found||status.approved!==approved){alert('Промяната не е потвърдена от базата данни. Проверете SQL настройките в Supabase.');return;}
+  alert((approved?'Достъпът е РАЗРЕШЕН за: ':'Достъпът е БЛОКИРАН за: ')+email+'\nПроверено в базата данни.');
 }
 async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 async function loadCloud(){
