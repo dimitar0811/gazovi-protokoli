@@ -109,7 +109,7 @@ test('new protocol carries over the same client and previous readings', async ({
 test('language switch changes interface language and keeps field values editable', async ({ page }) => {
   await page.locator('#client').fill('Language test');
   await page.getByRole('button', { name: 'EN', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'bg'); // Keep document language stable for Android keyboard behavior.
   await expect(page.locator('#protocolActions')).toContainText('Save');
   await expect(page.locator('#client')).toHaveValue('Language test');
   await page.getByRole('button', { name: 'BG', exact: true }).click();
