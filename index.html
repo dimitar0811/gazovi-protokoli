@@ -1201,25 +1201,18 @@ async function shareAccountingPdf(email){
    if(!window.html2pdf)throw new Error('PDF библиотеката не е заредена.');
    const buffer=await buildOnePagePdf($('sheet'));
    const blob=new Blob([buffer],{type:'application/pdf'});
-   const safePart=v=>String(v||'').trim().replace(/[^\p{L}\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
+   const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
    const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
-   const file=new File([blob],filename,{type:'application/pdf'});
-   const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
-   const body=encodeURIComponent('Здравейте,\n\nИзпращам готов протокол за проверка и фактуриране.\n\nНомер: '+($('pno').value||'')+'\nОбект: '+($('site').value||'')+'\nДата: '+($('date').value||'')+'\n\nПоздрави');
-   // On supported phones, share the actual PDF. The recipient may need to be selected in the share sheet.
-   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-     await navigator.share({title:'Протокол за фактуриране',text:'До: '+email+'\nМоля, провери протокола и подготви фактурата.',files:[file]});
-     alert('Избери приложението за имейл в менюто за споделяне и провери адреса на получателя: '+email);
-     return;
-   }
    url=URL.createObjectURL(blob);
    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-   window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+subject+'&body='+body;
-   setTimeout(()=>alert('PDF файлът е изтеглен. Ако не е прикачен автоматично, прикачи файла '+filename+' от папка „Изтегляния“ към писмото.'),800);
+   const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
+   const body=encodeURIComponent('Здравейте,\\n\\nИзпращам готов протокол за проверка и фактуриране.\\n\\nНомер: '+($('pno').value||'')+'\\nОбект: '+($('site').value||'')+'\\nДата: '+($('date').value||'')+'\\n\\nПоздрави');
+   window.location.href='mailto:'+email+'?subject='+subject+'&body='+body;
+   setTimeout(()=>alert('PDF файлът е изтеглен. В отвореното писмо прикачи файла '+filename+' от папка „Изтегляния“, след което изпрати имейла.'),900);
  }catch(e){
    if(e&&e.name==='AbortError')return;
    alert('Не успях да подготвя/споделя PDF: '+(e&&e.message?e.message:'неизвестна грешка'));
- }finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),5000);}
+ }finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),60000);}
 }
 async function shareProtocol(channel='viber'){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}closeAccountingMenu();await shareFile(channel);}
 const ctx=$('canvas').getContext('2d');let drawing=false;
