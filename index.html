@@ -739,14 +739,34 @@ details.compact-details[open]>summary:before{content:"−"}
   <button type="button" onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
   <button type="button" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
   <button type="button" onclick="openPdfViewer()" data-bg="🖨️ Преглед и печат" data-en="🖨️ Preview and print">🖨️ Преглед и печат</button>
-  <button type="button" onclick="shareProtocol('email')" data-bg="✉️ Изпрати по имейл" data-en="✉️ Send by email">✉️ Изпрати по имейл</button>
-  <button type="button" onclick="shareProtocol('viber')" data-bg="💬 Изпрати по Viber" data-en="💬 Send via Viber">💬 Изпрати по Viber</button>
+  <button type="button" onclick="openAccountingMenu()" data-bg="📤 Изпрати на счетоводството" data-en="📤 Send to accounting">📤 Изпрати на счетоводството</button>
   <button type="button" onclick="createSigningLink()" data-bg="✍️ Линк за подпис" data-en="✍️ Signing link">✍️ Линк за подпис</button>
 </div>
 
 </main>
 
 <div id="archiveModal" style="display: none;"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div id="archiveList"><div class="archive-item"><div class="archive-meta"><b>GP-8102026 г-1665</b><br>08.10.2026 г. — 1<br><small>Гр. Петрич с.Скрът</small></div><div class="archive-actions"><button onclick="openArchived(0)">Отвори</button><button class="secondary" onclick="deleteArchived(0)">Изтрий</button></div></div></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
+
+<div id="accountingMenuModal" role="dialog" aria-modal="true" aria-labelledby="accountingMenuTitle" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+ <div style="background:#fff;color:#222;width:min(100%,460px);max-height:90vh;overflow:auto;border-radius:14px;padding:20px;box-sizing:border-box;box-shadow:0 10px 40px #0004">
+  <h3 id="accountingMenuTitle" style="margin-top:0">Изпрати на счетоводството</h3>
+  <p>Избери начин за изпращане на готовия PDF протокол.</p>
+  <button type="button" style="width:100%;margin:6px 0" onclick="sendAccountingEmail()">✉️ Изпрати по имейл</button>
+  <button type="button" class="secondary" style="width:100%;margin:6px 0" onclick="editAccountingEmail()">⚙️ Смяна на имейла</button>
+  <button type="button" style="width:100%;margin:6px 0;background:#665cac" onclick="shareProtocol('viber')">💬 Изпрати по Viber</button>
+  <button type="button" class="secondary" style="width:100%;margin-top:10px" onclick="closeAccountingMenu()">Затвори</button>
+ </div>
+</div>
+<div id="accountingEmailModal" role="dialog" aria-modal="true" aria-labelledby="accountingEmailTitle" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10001;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+ <div style="background:#fff;color:#222;width:min(100%,460px);border-radius:14px;padding:20px;box-sizing:border-box;box-shadow:0 10px 40px #0004">
+  <h3 id="accountingEmailTitle" style="margin-top:0">Имейл на счетоводството</h3>
+  <label for="accountingEmailInput" style="display:block;margin:10px 0 6px">Имейл адрес</label>
+  <input id="accountingEmailInput" type="email" autocomplete="email" placeholder="schetovodstvo@example.com" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #aaa;border-radius:8px;font-size:16px">
+  <p id="accountingEmailNote" style="font-size:13px;color:#555">Адресът се запазва за следващите изпращания на това устройство.</p>
+  <button type="button" style="width:100%;margin:6px 0" onclick="saveAccountingEmail()">Запази имейла</button>
+  <button type="button" class="secondary" style="width:100%;margin:6px 0" onclick="closeAccountingEmail()">Отказ</button>
+ </div>
+</div>
 
 
 
@@ -1147,7 +1167,61 @@ async function createSigningLink(){
   }catch(e){console.error(e);alert((lang==='bg'?'Не успях да създам линк. Проверете дали сте изпълнили SQL настройката в Supabase. ':'Could not create link. Check that the Supabase SQL setup has been applied. ')+(e?.message||''));}
 }
 
-async function shareProtocol(channel='viber'){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;} await shareFile(channel);}
+
+const ACCOUNTING_EMAIL_KEY='gasAccountingEmail';
+function openAccountingMenu(){ $('accountingMenuModal').style.display='flex'; }
+function closeAccountingMenu(){ $('accountingMenuModal').style.display='none'; }
+function closeAccountingEmail(){ $('accountingEmailModal').style.display='none'; }
+function editAccountingEmail(){
+ $('accountingEmailInput').value=localStorage.getItem(ACCOUNTING_EMAIL_KEY)||'';
+ $('accountingEmailModal').style.display='flex';
+ setTimeout(()=>$('accountingEmailInput').focus(),100);
+}
+function saveAccountingEmail(){
+ const email=($('accountingEmailInput').value||'').trim();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Въведи валиден имейл адрес.');$('accountingEmailInput').focus();return;}
+ localStorage.setItem(ACCOUNTING_EMAIL_KEY,email);
+ closeAccountingEmail();
+ alert('Имейлът на счетоводството е запазен: '+email);
+}
+async function sendAccountingEmail(){
+ let email=localStorage.getItem(ACCOUNTING_EMAIL_KEY)||'';
+ if(!email){closeAccountingMenu();editAccountingEmail();return;}
+ if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
+ closeAccountingMenu();
+ await shareAccountingPdf(email);
+}
+async function shareAccountingPdf(email){
+ let url=null;
+ try{
+   document.querySelectorAll('#sheet input').forEach(el=>{if(el.type==='date'&&el.value)el.setAttribute('value',el.value);else if(el.type!=='date')el.setAttribute('value',el.value);});
+   document.querySelectorAll('#sheet textarea').forEach(el=>{el.textContent=el.value;});
+   document.querySelectorAll('#sheet details').forEach(el=>{el.open=true;});
+   await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+   if(!window.html2pdf)throw new Error('PDF библиотеката не е заредена.');
+   const buffer=await buildOnePagePdf($('sheet'));
+   const blob=new Blob([buffer],{type:'application/pdf'});
+   const safePart=v=>String(v||'').trim().replace(/[^\p{L}\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
+   const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
+   const file=new File([blob],filename,{type:'application/pdf'});
+   const subject=encodeURIComponent('Газов протокол '+($('pno').value||''));
+   const body=encodeURIComponent('Здравейте,\n\nИзпращам готов протокол за проверка и фактуриране.\n\nНомер: '+($('pno').value||'')+'\nОбект: '+($('site').value||'')+'\nДата: '+($('date').value||'')+'\n\nПоздрави');
+   // On supported phones, share the actual PDF. The recipient may need to be selected in the share sheet.
+   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+     await navigator.share({title:'Протокол за фактуриране',text:'До: '+email+'\nМоля, провери протокола и подготви фактурата.',files:[file]});
+     alert('Избери приложението за имейл в менюто за споделяне и провери адреса на получателя: '+email);
+     return;
+   }
+   url=URL.createObjectURL(blob);
+   const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+   window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+subject+'&body='+body;
+   setTimeout(()=>alert('PDF файлът е изтеглен. Ако не е прикачен автоматично, прикачи файла '+filename+' от папка „Изтегляния“ към писмото.'),800);
+ }catch(e){
+   if(e&&e.name==='AbortError')return;
+   alert('Не успях да подготвя/споделя PDF: '+(e&&e.message?e.message:'неизвестна грешка'));
+ }finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),5000);}
+}
+async function shareProtocol(channel='viber'){if(!saveSilently()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}closeAccountingMenu();await shareFile(channel);}
 const ctx=$('canvas').getContext('2d');let drawing=false;
 function pos(e){let r=$('canvas').getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*900/r.width,y:(p.clientY-r.top)*340/r.height}}
 function start(e){drawing=true;let p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()}
