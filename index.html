@@ -648,13 +648,13 @@ html,body,#sheet,.sheet{touch-action:pan-x pan-y pinch-zoom}
     <input id="authPassword2" type="password" placeholder="Потвърди паролата" style="display:none">
     <button id="authMainBtn" onclick="authMain()">Вход</button>
     <button id="authToggleBtn" onclick="toggleAuthMode()">Регистрация</button>
-    <button onclick="continueOffline()">Работа без вход (офлайн)</button>
     <button type="button" class="secondary" onclick="shareApp()">Сподели приложението</button>
     <div id="authMsg"></div>
   </div>
 </div>
 <div id="userBar" class="user-bar" style="display:none">
   <span id="userEmail"></span>
+  <button type="button" class="secondary" id="adminAccessBtn" style="display:none" onclick="manageAccess()">Управление на достъпа</button>
   <button type="button" class="secondary" onclick="shareApp()">Сподели приложението</button>
   <button onclick="logout()">Изход</button>
 </div>
@@ -761,7 +761,7 @@ let sigTarget=null, lang='bg';
 const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
 const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let authMode='login', currentUser=null;
+let authMode='login', currentUser=null, currentUserRole='user';
 function authMessage(msg,ok=false){$('authMsg').textContent=msg;$('authMsg').style.color=ok?'#167a35':'#b00020'}
 function toggleAuthMode(){authMode=authMode==='login'?'register':'login';$('authPassword2').style.display=authMode==='register'?'block':'none';$('authMainBtn').textContent=authMode==='register'?'Регистрация':'Вход';$('authToggleBtn').textContent=authMode==='register'?'Назад към вход':'Регистрация';$('authSubtitle').textContent=authMode==='register'?'Създаване на нов профил':'Вход в приложението';$('authMsg').textContent='';}
 async function authMain(){
@@ -771,7 +771,7 @@ async function authMain(){
   authMessage('Моля, изчакайте...',true);
   try{
     if(authMode==='register'){
-      const {data,error}=await sb.auth.signUp({email,password});
+      const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
       if(error) throw error;
       if(data.session){authMessage('Регистрацията е успешна.',true);await onSignedIn(data.session.user)}
       else authMessage('Регистрацията е създадена. Проверете имейла си за потвърждение.',true);
@@ -800,28 +800,47 @@ async function ensureCompany(){
   return true;
 }
 async function onSignedIn(user){
-  currentUser=user;
-  // Никога не оставяме затъмняващия екран върху протоколите след успешен вход.
+  if(!user?.email_confirmed_at){
+    await sb.auth.signOut();
+    currentUser=null;currentUserRole='user';
+    $('authGate').style.display='flex';$('userBar').style.display='none';
+    authMessage('Потвърдете имейла си чрез линка, изпратен на пощата ви, преди да влезете.');
+    return;
+  }
+  const {data:access,error:accessError}=await sb.rpc('check_app_access');
+  if(accessError||!access?.approved){
+    await sb.auth.signOut();
+    currentUser=null;currentUserRole='user';
+    $('authGate').style.display='flex';$('userBar').style.display='none';
+    authMessage(accessError?'Не успях да проверя разрешението за достъп. Проверете настройката в Supabase.':'Този имейл няма одобрен достъп. Свържете се с администратора.');
+    return;
+  }
+  currentUser=user;currentUserRole=access.role||'user';
   $('authGate').style.display='none';
   $('userBar').style.display='flex';
   $('userEmail').textContent=user.email||'';
+  $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
   try{
     if(await ensureCompany()){
       await loadCloud();
     }else{
-      $('authGate').style.display='none';
-      $('userBar').style.display='flex';
       $('userEmail').textContent=(user.email||'')+' — локален режим';
     }
   }catch(e){
     console.warn('Cloud setup unavailable; continuing locally',e);
-    $('authGate').style.display='none';
-    $('userBar').style.display='flex';
     $('userEmail').textContent=(user.email||'')+' — локален режим';
   }
 }
-async function logout(){await sb.auth.signOut();currentUser=null;currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
-function continueOffline(){$('authGate').style.display='none';$('userBar').style.display='flex';$('userEmail').textContent='Офлайн режим';}
+async function manageAccess(){
+  if(currentUserRole!=='admin'){authMessage('Нямате администраторски права.');return;}
+  const email=(window.prompt('Имейл на потребителя, когото искате да разрешите или блокирате:')||'').trim().toLowerCase();
+  if(!email)return;
+  const approved=window.confirm('Натиснете OK, за да разрешите този имейл. Натиснете Cancel, за да блокирате достъпа.');
+  const {error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:'user'});
+  if(error){alert(error.message||'Неуспешна промяна на достъпа.');return;}
+  alert((approved?'Разрешен достъп за: ':'Блокиран достъп за: ')+email);
+}
+async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 async function loadCloud(){
   if(!currentUser||!currentCompanyId)return;
   const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).order('saved_at',{ascending:false});
