@@ -913,6 +913,7 @@ async function changeEmailAccess(approved, role='user'){
   message.textContent=(approved?'Достъпът е РАЗРЕШЕН за: ':'ДОСТЪПЪТ Е БЛОКИРАН за: ')+email;
   message.style.color=approved?'#167a35':'#b00020';
   alert((approved?'Достъпът е разрешен за: ':'Достъпът е блокиран за: ')+email+'\\nСега потребителят трябва да излезе и да опита да влезе отново.');
+  if(approved) closeAccessModal();
 }
 async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('invoicingListBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 async function loadCloud(){
