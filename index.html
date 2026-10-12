@@ -664,8 +664,9 @@ details.compact-details[open]>summary:before{content:"−"}
     <input id="accessEmailInput" type="email" autocomplete="email" placeholder="name@example.com" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #aaa;border-radius:8px;font-size:16px">
     <p>Избери действие за този имейл:</p>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <button type="button" onclick="changeEmailAccess(true)" style="background:#167a35;color:white">Разреши достъп</button>
-      <button type="button" onclick="changeEmailAccess(false)" style="background:#b00020;color:white">Блокирай достъп</button>
+      <button type="button" onclick="changeEmailAccess(true,\'user\')" style="background:#167a35;color:white">Разреши обикновен достъп</button>
+      <button type="button" onclick="changeEmailAccess(true,\'accounting\')" style="background:#123b60;color:white">Разреши достъп като счетоводство</button>
+      <button type="button" onclick="changeEmailAccess(false,\'user\')" style="background:#b00020;color:white">Блокирай достъп</button>
       <button type="button" class="secondary" onclick="closeAccessModal()">Затвори без промяна</button>
     </div>
     <p id="accessActionMessage" role="status" style="margin-top:12px"></p>
@@ -738,7 +739,7 @@ details.compact-details[open]>summary:before{content:"−"}
   <button type="button" onclick="newProtocol()" data-bg="Нов протокол" data-en="New protocol">Нов протокол</button>
   <button type="button" onclick="save()" data-bg="Запиши" data-en="Save">Запиши</button>
   <button type="button" onclick="openArchive()" data-bg="Архив" data-en="Archive">Архив</button>
-  <button type="button" onclick="openInvoicingList()" data-bg="📋 Протоколи за фактуриране" data-en="📋 Invoicing protocols">📋 Протоколи за фактуриране</button>
+  <button type="button" id="invoicingListBtn" onclick="openInvoicingList()" data-bg="📋 Протоколи за фактуриране" data-en="📋 Invoicing protocols" style="display:none">📋 Протоколи за фактуриране</button>
   <button type="button" onclick="openPdfViewer()" data-bg="🖨️ Преглед и печат" data-en="🖨️ Preview and print">🖨️ Преглед и печат</button>
   <button type="button" onclick="openAccountingMenu()" data-bg="📤 Изпрати на счетоводството" data-en="📤 Send to accounting">📤 Изпрати на счетоводството</button>
   <button type="button" onclick="createSigningLink()" data-bg="✍️ Линк за подпис" data-en="✍️ Signing link">✍️ Линк за подпис</button>
@@ -870,6 +871,7 @@ async function onSignedIn(user){
   $('userBar').style.display='flex';
   $('userEmail').textContent=user.email||'';
   $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
+  $('invoicingListBtn').style.display=['admin','accounting'].includes(currentUserRole)?'inline-block':'none';
   try{
     if(await ensureCompany()){
       await loadCloud();
@@ -893,7 +895,7 @@ function closeAccessModal(){
   $('accessActionModal').style.display='none';
   pendingAccessEmail='';
 }
-async function changeEmailAccess(approved){
+async function changeEmailAccess(approved, role='user'){
   if(currentUserRole!=='admin'){alert('Липсват администраторски права.');return;}
   const email=($('accessEmailInput').value||'').trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Въведете валиден имейл.');$('accessEmailInput').focus();return;}
@@ -902,7 +904,7 @@ async function changeEmailAccess(approved){
   const message=$('accessActionMessage');
   message.textContent='Записване на промяната...';
   message.style.color='#333';
-  const {data,error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:'user'});
+  const {data,error}=await sb.rpc('admin_set_approved_email',{p_email:email,p_approved:approved,p_role:approved?role:'user'});
   if(error){
     message.textContent='ГРЕШКА — промяната не е записана: '+(error.message||'неизвестна грешка');
     message.style.color='#b00020';
@@ -912,7 +914,7 @@ async function changeEmailAccess(approved){
   message.style.color=approved?'#167a35':'#b00020';
   alert((approved?'Достъпът е разрешен за: ':'Достъпът е блокиран за: ')+email+'\\nСега потребителят трябва да излезе и да опита да влезе отново.');
 }
-async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
+async function logout(){await sb.auth.signOut();currentUser=null;currentUserRole='user';currentCompanyId='';localStorage.removeItem('gasCompanyId');$('userBar').style.display='none';$('adminAccessBtn').style.display='none';$('invoicingListBtn').style.display='none';$('authGate').style.display='flex';$('authPassword').value='';$('authPassword2').value='';authMessage('');}
 async function loadCloud(){
   if(!currentUser||!currentCompanyId)return;
   const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).order('saved_at',{ascending:false});
@@ -1247,6 +1249,7 @@ async function shareProtocol(channel='viber'){
 let invoicingRows=[];
 function openInvoicingList(){
  if(!currentUser){alert('Първо влезте в приложението.');return;}
+ if(!['admin','accounting'].includes(currentUserRole)){alert('Достъпът до протоколите за фактуриране е само за счетоводството.');return;}
  $('invoicingModal').style.display='flex';
  $('invoicingSearch').value='';
  $('invoicingFilter').value='pending';
@@ -1255,6 +1258,7 @@ function openInvoicingList(){
 function closeInvoicingList(){ $('invoicingModal').style.display='none'; }
 async function loadInvoicingList(){
  if(!currentUser){$('invoicingList').innerHTML='<p>Първо влезте в приложението.</p>';return;}
+ if(!['admin','accounting'].includes(currentUserRole)){$('invoicingList').innerHTML='<p>Нямате достъп до протоколите за фактуриране.</p>';return;}
  if(!currentCompanyId && !(await ensureCompany()))return;
  $('invoicingList').innerHTML='<p>Зареждане на протоколите...</p>';
  const {data,error}=await sb.from('protocols')
@@ -1293,6 +1297,7 @@ function renderInvoicingList(){
  };
 }
 async function openInvoiceProtocol(pno){
+ if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате достъп до протоколите за фактуриране.');return;}
  const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).eq('pno',pno).maybeSingle();
  if(error||!data){alert('Не успях да отворя протокола: '+(error?.message||'не е намерен'));return;}
  const d=cloudToLocal(data),a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);
@@ -1301,6 +1306,7 @@ async function openInvoiceProtocol(pno){
  closeInvoicingList();openArchived(i);
 }
 async function setInvoiceStatus(pno,status){
+ if(!['admin','accounting'].includes(currentUserRole)){alert('Само счетоводството може да променя статуса.');return;}
  const updates=status==='processed'?{accounting_status:'processed',accounting_processed_at:new Date().toISOString()}:{accounting_status:'pending',accounting_processed_at:null};
  const {error}=await sb.from('protocols').update(updates).eq('company_id',currentCompanyId).eq('pno',pno);
  if(error){alert('Не успях да сменя статуса. Проверете настройките на базата данни. '+error.message);return;}
