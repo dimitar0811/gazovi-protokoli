@@ -28,6 +28,17 @@ declare
   v_token text;
 begin
   if v_user is null then raise exception 'Влезте в приложението.'; end if;
+
+  -- Допълнителна проверка: само одобрените имейли могат да създават линкове за фактуриране.
+  if not exists (
+    select 1
+    from public.approved_emails a
+    where lower(a.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+      and a.approved = true
+  ) then
+    raise exception 'Нямате разрешение за достъп до приложението.';
+  end if;
+
   if coalesce(trim(p_pno),'') = '' or p_company_id is null then
     raise exception 'Липсва номер на протокол или фирма.';
   end if;
