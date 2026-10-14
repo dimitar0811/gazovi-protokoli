@@ -1032,18 +1032,37 @@ async function newProtocol(){
  if(client){
   last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];
  }
+ const getNextNumber=(numbers)=>{
+  const max=numbers.reduce((value,n)=>{
+   const match=String(n).match(new RegExp('^'+prefix+'-(\\d+)$'));
+   return match?Math.max(value,Number(match[1])):value;
+  },0);
+  return prefix+'-'+String(max+1).padStart(3,'0');
+ };
  let usedNumbers=a.map(x=>String(x.pno||'')).filter(n=>n.startsWith(prefix+'-'));
+ let newNumber=getNextNumber(usedNumbers);
+ ids.forEach(id=>$(id).value='');
+ $('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';
+ $('date').value=now.toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});
+ $('pno').value=newNumber;
+ if(last){
+  $('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';
+  if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;
+  if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;
+ }
+ calc();window.scrollTo({top:0,behavior:'smooth'});
  if(currentUser&&currentCompanyId){
   const {data,error}=await sb.from('protocols').select('pno').eq('company_id',currentCompanyId).like('pno',prefix+'-%');
   if(error){
    console.error('Protocol number lookup failed:',error);
-   alert(lang==='bg'?'Внимание: не успях да проверя всички номера в Supabase. Ще покажа следващия номер според наличния архив. Проверете номера преди запис.':'Warning: Could not check all numbers in Supabase. The next number from the available archive will be shown. Check it before saving.');
-  }else{
-   usedNumbers=usedNumbers.concat((data||[]).map(x=>String(x.pno||'')));
+   alert(lang==='bg'?'Не успях да проверя номерата в Supabase. Номерът е показан според наличния архив. Провери го преди запис.':'Could not check Supabase numbers. The displayed number is based on the available archive. Check before saving.');
+   return;
   }
+  usedNumbers=usedNumbers.concat((data||[]).map(x=>String(x.pno||'')));
+  newNumber=getNextNumber(usedNumbers);
+  $('pno').value=newNumber;
  }
- const maxSequence=usedNumbers.reduce((max,n)=>{
-  const match=n.match(new RegExp('^'+prefix+'-(\\d+)
+}
 
 let currentPdfBlob=null,pdfZoom=1,pdfBaseWidth=0,pdfDoc=null;
 function loadExternalScript(src){return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>x.src===src);if(existing){if(existing.dataset.loaded==='yes')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}const sc=document.createElement('script');sc.src=src;sc.onload=()=>{sc.dataset.loaded='yes';resolve()};sc.onerror=()=>reject(new Error('Не може да се зареди библиотека за PDF'));document.head.appendChild(sc);});}
