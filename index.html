@@ -1036,10 +1036,11 @@ async function newProtocol(){
  if(currentUser&&currentCompanyId){
   const {data,error}=await sb.from('protocols').select('pno').eq('company_id',currentCompanyId).like('pno',prefix+'-%');
   if(error){
-   alert((lang==='bg'?'Не успях да проверя номерата в Supabase. Не е създаден нов протокол. ':'Could not check protocol numbers in Supabase. No new protocol was started. ')+error.message);
-   return;
+   console.error('Protocol number lookup failed:',error);
+   alert(lang==='bg'?'Внимание: не успях да проверя всички номера в Supabase. Ще покажа следващия номер според наличния архив. Проверете номера преди запис.':'Warning: Could not check all numbers in Supabase. The next number from the available archive will be shown. Check it before saving.');
+  }else{
+   usedNumbers=usedNumbers.concat((data||[]).map(x=>String(x.pno||'')));
   }
-  usedNumbers=usedNumbers.concat((data||[]).map(x=>String(x.pno||'')));
  }
  const maxSequence=usedNumbers.reduce((max,n)=>{
   const match=n.match(new RegExp('^'+prefix+'-(\\d+)
