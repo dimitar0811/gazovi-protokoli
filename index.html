@@ -934,7 +934,7 @@ async function loadCloud(){
 }
 function cloudToLocal(x){
   const d={...x};
-  d.pno=x.pno||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';
+  d.pno=x.pno||x.protocol_number||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';
   d.techName=x.tech_name||'';d.clientName=x.client_name||'';
   d.createdByEmail=x.created_by_email||'';d.updatedByEmail=x.updated_by_email||'';
   d.savedAt=x.saved_at?new Date(x.saved_at).getTime():Date.now();
@@ -950,7 +950,7 @@ async function saveCloud(d){
     updated_by:currentUser.id,
     created_by_email:old?.created_by_email||currentUser.email||'',
     updated_by_email:currentUser.email||'',
-    pno:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,
+    pno:d.pno,protocol_number:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,
     cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:d.notes,
     tech_name:d.techName,client_name:d.clientName,tech_sig:d.techSig,client_sig:d.clientSig,saved_at:new Date().toISOString()
   };
