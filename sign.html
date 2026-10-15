@@ -35,7 +35,7 @@ async function init(){
   const p=data.protocol||{},isSigned=!!data.signed;signed=isSigned;loaded=true;
   $('protocolInfo').innerHTML=
    addField('Номер',p.pno)+addField('Дата',p.date)+addField('Клиент / фирма',p.client)+addField('ЕИК',p.eik)+
-   addField('Техник',p.tech_name||p.tech)+addField('Обект',p.site)+addField('Адрес / контакт',p.contact)+
+   addField('Председател на доставчика',p.tech_name||p.tech)+addField('Обект',p.site)+addField('Адрес / контакт',p.contact)+
    addField('Коректор — начално',p.c1)+addField('Коректор — крайно',p.c2)+addField('Коректор — разход',p.cv)+
    addField('Разходомер — начално',p.m1)+addField('Разходомер — крайно',p.m2)+addField('Разходомер — разход',p.mv);
   $('notes').textContent=p.notes?'Забележки: '+p.notes:'';
