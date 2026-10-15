@@ -16,7 +16,7 @@
 <div class="section"><h2>Коректор</h2><div id="corrector" class="grid"></div></div>
 <div class="section"><h2>Разходомер</h2><div id="meter" class="grid"></div></div>
 <div class="section"><h2>Допълнителна информация</h2><div id="extra" class="grid"></div><div id="notes" class="notes"></div></div>
-<div class="signatures"><div class="sig"><b>Техник</b><div id="techName"></div><div id="techSig"></div></div><div class="sig"><b>Клиент / представител</b><div id="clientName"></div><div id="clientSig"></div></div></div>
+<div class="signatures"><div class="sig"><b>Председател на доставчика</b><div id="techName"></div><div id="techSig"></div></div><div class="sig"><b>Клиент / представител</b><div id="clientName"></div><div id="clientSig"></div></div></div>
 </article>
 <div class="actions" id="actions" hidden><button type="button" onclick="window.print()">Печат / Запази като PDF</button></div>
 </main>
@@ -41,7 +41,7 @@ async function init(){
   if(error)throw error;
   const p=data?.protocol||{};
   $('meta').innerHTML=field('Номер на протокола',p.pno)+field('Дата',p.date)+field('Клиент',p.client)+field('ЕИК',p.eik);
-  $('client').innerHTML=value('Клиент / фирма',p.client)+value('ЕИК',p.eik)+value('Обект',p.site)+value('Адрес / контакт',p.contact)+value('Техник',p.tech_name||p.tech);
+  $('client').innerHTML=value('Клиент / фирма',p.client)+value('ЕИК',p.eik)+value('Обект',p.site)+value('Адрес / контакт',p.contact)+value('Председател на доставчика',p.tech_name||p.tech);
   $('corrector').innerHTML=value('Модел',p.cbm)+value('Сериен номер',p.cs)+value('Дата на проверка',p.cd)+value('Начално показание',p.c1)+value('Крайно показание',p.c2)+value('Количество',p.cv);
   $('meter').innerHTML=value('Модел',p.mbm)+value('Сериен номер',p.ms)+value('Дата на проверка',p.md)+value('Начално показание',p.m1)+value('Крайно показание',p.m2)+value('Количество',p.mv);
   $('extra').innerHTML=value('Номер',p.pno)+value('Дата',p.date);
