@@ -673,13 +673,15 @@ details.compact-details[open]>summary:before{content:"−"}
   </div>
 </div>
 <main>
-<div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:8px;background:#fff;border:2px solid #123b60;border-radius:12px;box-shadow:0 3px 12px #0003">
-  <span id="zoomDragHandle" title="Плъзни, за да преместиш лупата" style="font-weight:bold;color:#123b60;cursor:move;touch-action:none;user-select:none;padding:4px">⠿ 🔍 ЛУПА</span>
-  <button type="button" onclick="openPdfViewer()" style="background:#123b60;color:#fff">📄 Преглед PDF</button>
-
-  <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
-  <button type="button" class="secondary" onclick="changeProtocolZoom(0)" aria-label="Нормален размер">100%</button>
-  <button type="button" onclick="changeProtocolZoom(0.1)" aria-label="Увеличи протокола">＋</button>
+<div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:3px;width:44px;min-height:44px;box-sizing:border-box;background:#fff;border:2px solid #123b60;border-radius:50%;box-shadow:0 3px 12px #0003">
+  <button type="button" id="zoomDragHandle" onclick="toggleZoomControls()" aria-label="Покажи или скрий бутоните за увеличение" aria-expanded="false" title="Натисни за бутоните; плъзни за преместване" style="display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;color:#123b60;background:transparent;border:0;padding:4px;min-width:34px;min-height:34px;cursor:move;touch-action:none;user-select:none">🔍</button>
+  <div id="zoomActions" style="display:none;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;max-width:calc(100vw - 32px)">
+    <button type="button" onclick="openPdfViewer()" style="background:#123b60;color:#fff">📄 Преглед PDF</button>
+    <button type="button" class="secondary" onclick="changeProtocolZoom(-0.1)" aria-label="Намали увеличението">−</button>
+    <button type="button" class="secondary" onclick="changeProtocolZoom(0)" aria-label="Нормален размер">100%</button>
+    <button type="button" onclick="changeProtocolZoom(0.1)" aria-label="Увеличи протокола">＋</button>
+    <button type="button" class="secondary" onclick="toggleZoomControls()" aria-label="Скрий бутоните за увеличение">✕</button>
+  </div>
 </div>
 
 <div id="pdfViewerModal" role="dialog" aria-modal="true" aria-label="Преглед на PDF">
@@ -1141,6 +1143,19 @@ function closePdfViewer(){$('pdfViewerModal').style.display='none';$('pdfPages')
 })();
 
 
+function toggleZoomControls(){
+ const panel=document.getElementById('zoomControls');
+ const handle=document.getElementById('zoomDragHandle');
+ const actions=document.getElementById('zoomActions');
+ if(!panel||!handle||!actions)return;
+ const expanded=actions.style.display==='none';
+ actions.style.display=expanded?'flex':'none';
+ panel.style.width=expanded?'max-content':'44px';
+ panel.style.maxWidth=expanded?'calc(100vw - 24px)':'44px';
+ panel.style.padding=expanded?'6px':'3px';
+ panel.style.borderRadius=expanded?'10px':'50%';
+ handle.setAttribute('aria-expanded',String(expanded));
+}
 function enableMovableZoomControls(){
  const panel=document.getElementById('zoomControls'),handle=document.getElementById('zoomDragHandle');
  if(!panel||!handle||panel.dataset.movable==='yes')return;
@@ -1150,7 +1165,7 @@ function enableMovableZoomControls(){
  handle.addEventListener('pointerdown',e=>{
   dragging=true;handle.setPointerCapture?.(e.pointerId);
   const r=panel.getBoundingClientRect();startX=e.clientX;startY=e.clientY;origX=r.left;origY=r.top;
-  handle.style.cursor='grabbing';e.preventDefault();
+  handle.style.cursor='grabbing';
  });
  handle.addEventListener('pointermove',e=>{
   if(!dragging)return;
