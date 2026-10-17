@@ -585,6 +585,7 @@ label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:
 .auth-gate{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
 .auth-card{background:#fff;width:min(420px,100%);border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center}
 .auth-card h2{margin:0 0 6px}.auth-card p{margin:0 0 18px;color:#555}.auth-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:13px;border:1px solid #bbb;border-radius:8px;font-size:16px}.auth-card button{width:100%;margin-top:8px;padding:12px;border-radius:8px;font-size:16px}.auth-card #authMsg{min-height:24px;margin-top:12px;font-size:14px}.user-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:8px 12px;background:#f2f2f2;font-size:13px}.user-bar button{width:auto;margin:0;padding:6px 12px}
+#customReadingsList{display:grid;gap:8px}.custom-reading-card{border:1px solid #cbd8e4;border-radius:8px;padding:9px;background:#f8fafc}.custom-reading-top{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:7px}.custom-reading-top strong{color:#123b60}.custom-reading-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.custom-reading-fields>div{min-width:0}.custom-reading-difference{background:#e9f6ef;border-radius:5px;padding:8px;font-size:12px;align-self:end}.custom-reading-difference b{display:block;color:#12683a;font-size:15px;margin-top:3px}.custom-reading-card input{min-width:0}.custom-reading-remove{background:#b42318!important;color:#fff!important;padding:7px 9px!important}@media(max-width:600px){.custom-reading-fields{grid-template-columns:1fr 1fr}.custom-reading-difference{grid-column:1/-1}}@media print{.custom-reading-card{padding:4px!important}.custom-reading-fields{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important}.custom-reading-top{margin-bottom:3px!important}}
 </style>
 <style>.date-wrap{display:flex;align-items:center;gap:4px}.date-wrap input[type=text]{flex:1}.date-btn{padding:6px 8px;min-width:38px;min-height:34px;cursor:pointer;background:#1769aa;color:#fff;border-radius:6px;flex-shrink:0}.date-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}</style><style>input,textarea,button{font-family:Arial,sans-serif}input:focus,textarea:focus{outline:2px solid #1769aa}</style>
 <style id="a4-one-page-print">
@@ -729,6 +730,7 @@ details.compact-details[open]>summary:before{content:"−"}
 <div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
 </div><div class="calc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
 
+<div class="section" id="customReadingsSection"><h3 data-bg="Допълнителни показания" data-en="ADDITIONAL READINGS">Допълнителни показания</h3><div id="customReadingsList"></div><button type="button" class="secondary no-print" onclick="addCustomReading()" data-bg="＋ Добави графа" data-en="＋ Add reading">＋ Добави графа</button></div>
 <div class="section"><h3 data-bg="Забележки / заключение" data-en="NOTES / CONCLUSION">Забележки / заключение</h3><textarea id="notes"></textarea></div>
 
 <div class="footer">
@@ -809,6 +811,7 @@ details.compact-details[open]>summary:before{content:"−"}
 <script>
 const ids=['pno','date','client','techName','clientName','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes'];
 const $=id=>document.getElementById(id), num=id=>parseFloat($(id).value)||0;
+let customReadings=[],customReadingCounter=0;
 let sigTarget=null, lang='bg';
 
 const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
@@ -936,6 +939,7 @@ async function loadCloud(){
 }
 function cloudToLocal(x){
   const d={...x};
+  const decoded=decodeNotesWithReadings(x.notes||'');d.notes=decoded.notes;d.customReadings=decoded.customReadings;
   d.pno=x.pno||x.protocol_number||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';
   d.techName=x.tech_name||'';d.clientName=x.client_name||'';
   d.createdByEmail=x.created_by_email||'';d.updatedByEmail=x.updated_by_email||'';
@@ -953,7 +957,7 @@ async function saveCloud(d){
     created_by_email:old?.created_by_email||currentUser.email||'',
     updated_by_email:currentUser.email||'',
     pno:d.pno,protocol_number:d.pno,date:d.date,client:d.client,eik:d.eik,tech:d.tech,site:d.site,contact:d.contact,
-    cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:d.notes,
+    cbm:d.cbm,cs:d.cs,cd:d.cd,c1:d.c1,c2:d.c2,cv:d.cv,mbm:d.mbm,ms:d.ms,md:d.md,m1:d.m1,m2:d.m2,mv:d.mv,notes:encodeNotesWithReadings(d.notes,d.customReadings),
     tech_name:d.techName,client_name:d.clientName,tech_sig:d.techSig,client_sig:d.clientSig,saved_at:new Date().toISOString()
   };
   const {error}=await sb.from('protocols').upsert(row,{onConflict:'company_id,pno'});
@@ -1007,7 +1011,83 @@ function setLang(x){
   // Keep per-field language unset so Android's keyboard can choose its own language.
 }
 
-function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;return o}
+
+function encodeNotesWithReadings(notes,readings){
+  const text=String(notes||'');
+  if(!Array.isArray(readings)||!readings.length)return text;
+  return text+'\n<!--GAS_CUSTOM_READINGS:'+encodeURIComponent(JSON.stringify(readings))+'-->';
+}
+function decodeNotesWithReadings(raw){
+  const text=String(raw??'');
+  const match=text.match(/(?:\r?\n)?<!--GAS_CUSTOM_READINGS:([\s\S]*?)-->\s*$/);
+  if(!match)return {notes:text,customReadings:[]};
+  try{return {notes:text.slice(0,match.index).replace(/\s+$/,''),customReadings:JSON.parse(decodeURIComponent(match[1]))}}
+  catch(e){return {notes:text,customReadings:[]}}
+}
+function collectCustomReadings(){
+  return customReadings.map(r=>({id:String(r.id),name:String(r.name||'').trim(),start:String(r.start??''),end:String(r.end??'')}))
+    .filter(r=>r.name||r.start!==''||r.end!=='');
+}
+function renderCustomReadings(rows=[]){
+  customReadings=(Array.isArray(rows)?rows:[]).map(r=>({id:String(r.id||('cr'+(++customReadingCounter))),name:String(r.name||''),start:String(r.start??''),end:String(r.end??'')}));
+  const list=$('customReadingsList');if(!list)return;list.innerHTML='';
+  customReadings.forEach((reading,index)=>{
+    const card=document.createElement('div');card.className='custom-reading-card';card.dataset.readingId=reading.id;
+    const top=document.createElement('div');top.className='custom-reading-top';
+    const title=document.createElement('strong');title.dataset.bg='Графа '+(index+1);title.dataset.en='Reading '+(index+1);title.textContent=lang==='bg'?title.dataset.bg:title.dataset.en;top.appendChild(title);
+    const remove=document.createElement('button');remove.type='button';remove.className='custom-reading-remove no-print';remove.dataset.bg='Премахни';remove.dataset.en='Remove';remove.textContent=lang==='bg'?remove.dataset.bg:remove.dataset.en;remove.onclick=()=>renderCustomReadings(customReadings.filter(r=>r.id!==reading.id));top.appendChild(remove);
+    card.appendChild(top);
+    const fields=document.createElement('div');fields.className='custom-reading-fields';
+    const makeField=(fieldId,bg,en,value,type='text')=>{
+      const wrap=document.createElement('div'),label=document.createElement('label'),input=document.createElement('input');
+      label.htmlFor=fieldId;label.dataset.bg=bg;label.dataset.en=en;label.textContent=lang==='bg'?bg:en;
+      input.id=fieldId;input.type=type;input.value=value;input.autocomplete='off';
+      if(type==='number')input.step='any';
+      input.addEventListener('input',()=>{
+        reading[fieldId.endsWith('_name')?'name':fieldId.endsWith('_start')?'start':'end']=input.value;
+        if(fieldId.endsWith('_name')&&!reading.start){
+          const previous=findPreviousCustomEnd(input.value);
+          if(previous!==null){reading.start=String(previous);const startInput=$('custom_'+reading.id+'_start');if(startInput)startInput.value=reading.start;}
+        }
+        updateCustomDifference(card,reading);
+      });
+      wrap.appendChild(label);wrap.appendChild(input);fields.appendChild(wrap);
+    };
+    makeField('custom_'+reading.id+'_name','Име на графата','Reading name',reading.name);
+    makeField('custom_'+reading.id+'_start','Начална стойност','Starting value',reading.start,'number');
+    makeField('custom_'+reading.id+'_end','Крайна стойност','Ending value',reading.end,'number');
+    const diff=document.createElement('div');diff.className='custom-reading-difference';
+    const diffLabel=document.createElement('span');diffLabel.dataset.bg='Разлика';diffLabel.dataset.en='Difference';diffLabel.textContent=lang==='bg'?'Разлика':'Difference';
+    const diffValue=document.createElement('b');diffValue.className='custom-reading-difference-value';diff.appendChild(diffLabel);diff.appendChild(diffValue);fields.appendChild(diff);
+    card.appendChild(fields);list.appendChild(card);updateCustomDifference(card,reading);
+  });
+}
+function updateCustomDifference(card,reading){
+  const out=card.querySelector('.custom-reading-difference-value');
+  if(!out)return;
+  const a=String(reading.start??'').trim(),b=String(reading.end??'').trim();
+  if(a===''||b===''||!Number.isFinite(Number(a))||!Number.isFinite(Number(b))){out.textContent='—';return;}
+  out.textContent=(Number(b)-Number(a)).toLocaleString(lang==='bg'?'bg-BG':'en-GB',{maximumFractionDigits:6});
+}
+function findPreviousCustomEnd(name){
+  const client=$('client')?.value.trim().toLowerCase(),key=String(name||'').trim().toLowerCase();
+  if(!client||!key)return null;
+  const matches=archiveData().filter(p=>(p.pno||'')!==$('pno').value&&(p.client||'').trim().toLowerCase()===client&&Array.isArray(p.customReadings))
+    .sort((a,b)=>(new Date(toISODate(b.date)||'1970-01-01')-new Date(toISODate(a.date)||'1970-01-01'))||((b.savedAt||0)-(a.savedAt||0)));
+  for(const p of matches){
+    const r=p.customReadings.find(x=>String(x.name||'').trim().toLowerCase()===key&&String(x.end??'').trim()!=='');
+    if(r)return r.end;
+  }
+  return null;
+}
+function addCustomReading(){
+  customReadingCounter++;
+  const id='cr'+Date.now().toString(36)+customReadingCounter;
+  renderCustomReadings([...customReadings,{id,name:'',start:'',end:''}]);
+  const input=$('custom_'+id+'_name');if(input)input.focus();
+}
+
+function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;o.customReadings=collectCustomReadings();return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
 async function save(){
@@ -1023,7 +1103,7 @@ async function save(){
   localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);const cloudSaved=await saveCloud(d);
   alert(cloudSaved?(lang==='bg'?'Протоколът е записан и добавен в архива.':'Protocol saved to the archive.'):(lang==='bg'?'Протоколът е записан локално, но не и в облака. Проверете връзката и опитайте отново.':'Protocol saved locally, but not to the cloud. Check the connection and try again.'));
 }
-function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||''}}catch(e){}calc()}
+function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[])}}catch(e){}calc()}
 async function newProtocol(){
  if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;
  const now=new Date();
@@ -1052,6 +1132,7 @@ async function newProtocol(){
   if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;
   if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;
  }
+ renderCustomReadings((last?.customReadings||[]).map(r=>({...r,start:r.end??'',end:''})));
  calc();window.scrollTo({top:0,behavior:'smooth'});
  if(currentUser&&currentCompanyId){
   try{
@@ -1217,7 +1298,7 @@ function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
 function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length){box.innerHTML='<p>'+ (lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}box.innerHTML=a.map((d,i)=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
+function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
 
 async function createSigningLink(){
