@@ -1336,7 +1336,8 @@ function renderArchive(){
  const q=($('archiveSearch')?.value||'').trim().toLocaleLowerCase('bg'),date=$('archiveDateFilter')?.value||'';
  const rows=a.map((d,i)=>({d,i})).filter(({d})=>{
   const text=[d.pno,d.date,d.client,d.site,d.settlement,d.locality,d.city,d.town,d.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));
-  const protocolDate=archiveDateISO(d.date||d.protocol_date||d.protocolDate);\n  return text&&(!date||protocolDate===date);
+  const protocolDate=archiveDateISO(d.date||d.protocol_date||d.protocolDate);
+  return text&&(!date||protocolDate===date);
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
  box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')
