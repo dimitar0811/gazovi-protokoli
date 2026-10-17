@@ -1432,7 +1432,7 @@ function renderInvoicingList(){
  box.innerHTML=rows.map(x=>{
   const done=x.accounting_status==='processed';
   const sent=x.accounting_sent_at?new Date(x.accounting_sent_at).toLocaleDateString('bg-BG'):'—';
-  return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>'+esc(x.site||'')+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
+  return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(x.settlement||'—')+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
  }).join('');
  box.onclick=async e=>{
   const b=e.target.closest('button[data-action]');if(!b)return;
