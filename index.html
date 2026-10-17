@@ -1304,14 +1304,14 @@ window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutResto
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
-function archiveDateISO(v){const s=String(v||'').trim();let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=s.match(/(\d{1,2})[./](\d{1,2})[./](\d{4})/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
+function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
 function renderArchive(){
  let a=archiveData(),box=$('archiveList');
  if(!a.length){box.innerHTML='<p>'+(lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}
  const q=($('archiveSearch')?.value||'').trim().toLocaleLowerCase('bg'),date=$('archiveDateFilter')?.value||'';
  const rows=a.map((d,i)=>({d,i})).filter(({d})=>{
   const text=[d.pno,d.date,d.client,d.site,d.settlement,d.locality,d.city,d.town,d.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));
-  return text&&(!date||archiveDateISO(d.date)===date);
+  const protocolDate=archiveDateISO(d.date||d.protocol_date||d.protocolDate);\n  return text&&(!date||protocolDate===date);
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
  box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')
