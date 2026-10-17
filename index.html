@@ -820,22 +820,38 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let authMode='login', currentUser=null, currentUserRole='user';
 function authMessage(msg,ok=false){$('authMsg').textContent=msg;$('authMsg').style.color=ok?'#167a35':'#b00020'}
 function toggleAuthMode(){authMode=authMode==='login'?'register':'login';$('authPassword2').style.display=authMode==='register'?'block':'none';$('authMainBtn').textContent=authMode==='register'?'Регистрация':'Вход';$('authToggleBtn').textContent=authMode==='register'?'Назад към вход':'Регистрация';$('authSubtitle').textContent=authMode==='register'?'Създаване на нов профил':'Вход в приложението';$('authMsg').textContent='';}
+function authRequestTimeout(promise, label, ms=15000){
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label+' отне твърде дълго. Проверете интернет връзката и опитайте отново.')),ms)})
+  ]).finally(()=>clearTimeout(timer));
+}
 async function authMain(){
   const email=$('authEmail').value.trim(), password=$('authPassword').value;
   if(!email||!password){authMessage('Въведете имейл и парола.');return}
   if(authMode==='register' && password!==$('authPassword2').value){authMessage('Паролите не съвпадат.');return}
-  authMessage('Моля, изчакайте...',true);
+  const button=$('authMainBtn');
+  if(button.disabled)return;
+  button.disabled=true;
+  authMessage('Свързване със сървъра…',true);
   try{
     if(authMode==='register'){
-      const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+      const {data,error}=await authRequestTimeout(sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}}),'Регистрацията');
       if(error) throw error;
       if(data.session){authMessage('Регистрацията е успешна.',true);await onSignedIn(data.session.user)}
       else authMessage('Регистрацията е създадена. Проверете имейла си за потвърждение.',true);
     }else{
-      const {data,error}=await sb.auth.signInWithPassword({email,password});
-      if(error) throw error; await onSignedIn(data.user);
+      const {data,error}=await authRequestTimeout(sb.auth.signInWithPassword({email,password}),'Входът');
+      if(error) throw error;
+      await onSignedIn(data.user);
     }
-  }catch(e){authMessage(e.message||'Грешка при вход.');}
+  }catch(e){
+    console.error('Authentication failed:',e);
+    authMessage(e.message||'Грешка при вход. Опитайте отново.');
+  }finally{
+    button.disabled=false;
+  }
 }
 let currentCompanyId=localStorage.getItem('gasCompanyId')||'';
 const COMPANY_NAME='ПРОТОКОЛИ ЗАСИЧАНИЯ';
@@ -863,7 +879,16 @@ async function onSignedIn(user){
     authMessage('Потвърдете имейла си чрез линка, изпратен на пощата ви, преди да влезете.');
     return;
   }
-  const {data:access,error:accessError}=await sb.rpc('check_app_access');
+  let accessResult;
+  try{
+    accessResult=await authRequestTimeout(sb.rpc('check_app_access'),'Проверката на разрешението за достъп');
+  }catch(e){
+    console.error('Access check failed:',e);
+    $('authGate').style.display='flex';$('userBar').style.display='none';
+    authMessage(e.message||'Не успях да проверя разрешението за достъп. Опитайте отново.');
+    return;
+  }
+  const {data:access,error:accessError}=accessResult;
   if(accessError||!access?.approved){
     await sb.auth.signOut();
     currentUser=null;currentUserRole='user';
