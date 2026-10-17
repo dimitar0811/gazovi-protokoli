@@ -1106,15 +1106,17 @@ async function save(){
 }
 function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[])}}catch(e){}calc()}
 async function newProtocol(){
- if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива.':'Start a new protocol? The previous protocol will remain in the archive.'))return;
+ if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива. Постоянните данни ще се пренесат, а подписите и дневните показания ще се изчистят.':'Start a new protocol? The previous protocol will remain in the archive. Permanent details will be copied; signatures and daily readings will be cleared.'))return;
  const now=new Date();
  const prefix=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
- const client=$('client').value.trim();
+ const current=collect();
+ const client=String(current.client||'').trim();
  const a=archiveData();
  let last=null;
  if(client){
   last=a.filter(x=>(x.client||'').trim().toLowerCase()===client.toLowerCase()).sort((x,y)=>(new Date(toISODate(y.date)||'1970-01-01')-new Date(toISODate(x.date)||'1970-01-01')) || ((y.savedAt||0)-(x.savedAt||0)))[0];
  }
+ const source=(client && current.client) ? current : (last||current);
  const getNextNumber=(numbers)=>{
   const max=numbers.reduce((value,n)=>{
    const match=String(n).match(new RegExp('^'+prefix+'-(\\d+)$'));
@@ -1125,15 +1127,20 @@ async function newProtocol(){
  let usedNumbers=a.map(x=>String(x.pno||x.protocol_number||'')).filter(n=>n.startsWith(prefix+'-'));
  let newNumber=getNextNumber(usedNumbers);
  ids.forEach(id=>$(id).value='');
- $('techSig').innerHTML='';$('clientSig').innerHTML='';$('techName').value='';$('clientName').value='';
+ $('techSig').innerHTML='';$('clientSig').innerHTML='';
+ $('techName').value=source.techName||last?.techName||'';
+ $('clientName').value=source.clientName||last?.clientName||'';
  $('date').value=now.toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});
  $('pno').value=newNumber;
- if(last){
-  $('client').value=last.client||'';$('eik').value=last.eik||'';$('tech').value=last.tech||'';$('site').value=last.site||'';$('contact').value=last.contact||'';$('cbm').value=last.cbm||'';$('cs').value=last.cs||'';$('cd').value=last.cd||'';$('cv').value=last.cv||'';$('mbm').value=last.mbm||'';$('ms').value=last.ms||'';$('md').value=last.md||'';$('mv').value=last.mv||'';
-  if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;
-  if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;
- }
- renderCustomReadings((last?.customReadings||[]).map(r=>({...r,client:r.client||last.client||'',start:r.end??'',end:''})));
+ // Пренасяме постоянните данни за същия клиент, но не и дневните показания.
+ ['client','eik','tech','site','contact','cbm','cs','cd','cv','mbm','ms','md','mv','notes'].forEach(id=>{
+  $(id).value=(source[id]!==undefined&&source[id]!==null)?source[id]:(last?.[id]||'');
+ });
+ $('c1').value=String(current.c2??'').trim()!==''?current.c2:(last?.c2??'');
+ $('m1').value=String(current.m2??'').trim()!==''?current.m2:(last?.m2??'');
+ $('c2').value='';$('m2').value='';
+ const priorReadings=Array.isArray(current.customReadings)&&current.customReadings.length?current.customReadings:(last?.customReadings||[]);
+ renderCustomReadings(priorReadings.map(r=>({...r,client:r.client||client||last?.client||'',start:String(r.end??'').trim()!==''?r.end:(findPreviousCustomEnd(r.name,r.client)??''),end:''})));
  calc();window.scrollTo({top:0,behavior:'smooth'});
  if(currentUser&&currentCompanyId){
   try{
