@@ -1407,7 +1407,7 @@ async function loadInvoicingList(){
  if(!currentCompanyId && !(await ensureCompany()))return;
  $('invoicingList').innerHTML='<p>Зареждане на протоколите...</p>';
  const {data,error}=await sb.from('protocols')
-  .select('pno,date,client,site,saved_at,accounting_status,accounting_sent_at,accounting_processed_at')
+  .select('*')
   .eq('company_id',currentCompanyId)
   .not('accounting_status','is',null)
   .order('accounting_sent_at',{ascending:false});
@@ -1427,12 +1427,13 @@ function renderInvoicingList(){
  const pending=invoicingRows.filter(x=>x.accounting_status==='pending').length;
  const processed=invoicingRows.filter(x=>x.accounting_status==='processed').length;
  $('invoicingSummary').textContent='Общо: '+invoicingRows.length+' | Чакат: '+pending+' | Обработени: '+processed;
- const rows=invoicingRows.filter(x=>(filter==='all'||x.accounting_status===filter)&&[x.pno,x.date,x.client,x.site,x.settlement].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q)));
+ const rows=invoicingRows.filter(x=>(filter==='all'||x.accounting_status===filter)&&[x.pno,x.date,x.client,x.site,x.settlement,x.locality,x.city,x.town,x.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q)));
  if(!rows.length){box.innerHTML='<p>Няма протоколи за избрания филтър.</p>';return;}
  box.innerHTML=rows.map(x=>{
   const done=x.accounting_status==='processed';
   const sent=x.accounting_sent_at?new Date(x.accounting_sent_at).toLocaleDateString('bg-BG'):'—';
-  return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(x.settlement||x.site||'—')+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
+  const locality=x.settlement||x.locality||x.city||x.town||x.site||x.address||'—';
+  return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(locality)+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
  }).join('');
  box.onclick=async e=>{
   const b=e.target.closest('button[data-action]');if(!b)return;
