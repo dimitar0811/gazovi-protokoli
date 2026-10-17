@@ -1407,7 +1407,7 @@ async function loadInvoicingList(){
  if(!currentCompanyId && !(await ensureCompany()))return;
  $('invoicingList').innerHTML='<p>Зареждане на протоколите...</p>';
  const {data,error}=await sb.from('protocols')
-  .select('pno,date,client,site,settlement,saved_at,accounting_status,accounting_sent_at,accounting_processed_at')
+  .select('pno,date,client,site,saved_at,accounting_status,accounting_sent_at,accounting_processed_at')
   .eq('company_id',currentCompanyId)
   .not('accounting_status','is',null)
   .order('accounting_sent_at',{ascending:false});
