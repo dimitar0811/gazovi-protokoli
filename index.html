@@ -751,7 +751,7 @@ details.compact-details[open]>summary:before{content:"−"}
 
 </main>
 
-<div id="archiveModal" style="display: none;"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div id="archiveList"><div class="archive-item"><div class="archive-meta"><b>GP-8102026 г-1665</b><br>08.10.2026 г. — 1<br><small>Гр. Петрич с.Скрът</small></div><div class="archive-actions"><button onclick="openArchived(0)">Отвори</button><button class="secondary" onclick="deleteArchived(0)">Изтрий</button></div></div></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
+<div id="archiveModal" style="display: none;"><div class="modal archive-modal"><h3 data-bg="Архив на протоколите" data-en="Protocol archive">Архив на протоколите</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><input id="archiveSearch" type="search" placeholder="Търси клиент, обект, адрес" oninput="renderArchive()" style="flex:1;min-width:180px;font-size:16px;padding:10px"><input id="archiveDateFilter" type="date" aria-label="Филтър по дата" title="Филтър по дата" onchange="renderArchive()" style="width:auto;min-width:150px;font-size:16px;padding:10px;border:1px solid #bac8d5;border-radius:6px"></div><div id="archiveList"><div class="archive-item"><div class="archive-meta"><b>GP-8102026 г-1665</b><br>08.10.2026 г. — 1<br><small>Гр. Петрич с.Скрът</small></div><div class="archive-actions"><button onclick="openArchived(0)">Отвори</button><button class="secondary" onclick="deleteArchived(0)">Изтрий</button></div></div></div><div class="actions"><button class="secondary" onclick="closeArchive()" data-bg="Затвори" data-en="Close">Затвори</button></div></div></div>
 
 <div id="invoicingModal" role="dialog" aria-modal="true" aria-labelledby="invoicingTitle" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10002;align-items:center;justify-content:center;padding:15px">
  <div class="modal archive-modal" style="width:min(100%,900px);background:#fff;color:#172536">
@@ -1302,9 +1302,20 @@ function printProtocol(){
 }
 window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutRestore();});
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
-function openArchive(){renderArchive();$('archiveModal').style.display='flex'}
+function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
-function renderArchive(){let a=archiveData(), box=$('archiveList');if(!a.length){box.innerHTML='<p>'+ (lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}box.innerHTML=a.map((d,i)=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')}
+function archiveDateISO(v){let s=String(v||'').trim(),m=s.match(/(\\d{1,2})[.\\/](\\d{1,2})[.\\/](\\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');m=s.match(/(\\d{4})-(\\d{2})-(\\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
+function renderArchive(){
+ let a=archiveData(),box=$('archiveList');
+ if(!a.length){box.innerHTML='<p>'+(lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}
+ const q=($('archiveSearch')?.value||'').trim().toLocaleLowerCase('bg'),date=$('archiveDateFilter')?.value||'';
+ const rows=a.map((d,i)=>({d,i})).filter(({d})=>{
+  const text=[d.pno,d.date,d.client,d.site,d.settlement,d.locality,d.city,d.town,d.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));
+  return text&&(!date||archiveDateISO(d.date)===date);
+ });
+ if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
+ box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')
+}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
