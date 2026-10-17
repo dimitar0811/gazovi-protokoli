@@ -1025,11 +1025,11 @@ function decodeNotesWithReadings(raw){
   catch(e){return {notes:text,customReadings:[]}}
 }
 function collectCustomReadings(){
-  return customReadings.map(r=>({id:String(r.id),name:String(r.name||'').trim(),start:String(r.start??''),end:String(r.end??'')}))
-    .filter(r=>r.name||r.start!==''||r.end!=='');
+  return customReadings.map(r=>({id:String(r.id),client:String(r.client||'').trim(),name:String(r.name||'').trim(),start:String(r.start??''),end:String(r.end??'')}))
+    .filter(r=>r.client||r.name||r.start!==''||r.end!=='');
 }
 function renderCustomReadings(rows=[]){
-  customReadings=(Array.isArray(rows)?rows:[]).map(r=>({id:String(r.id||('cr'+(++customReadingCounter))),name:String(r.name||''),start:String(r.start??''),end:String(r.end??'')}));
+  customReadings=(Array.isArray(rows)?rows:[]).map(r=>({id:String(r.id||('cr'+(++customReadingCounter))),client:String(r.client||''),name:String(r.name||''),start:String(r.start??''),end:String(r.end??'')}));
   const list=$('customReadingsList');if(!list)return;list.innerHTML='';
   customReadings.forEach((reading,index)=>{
     const card=document.createElement('div');card.className='custom-reading-card';card.dataset.readingId=reading.id;
@@ -1044,15 +1044,16 @@ function renderCustomReadings(rows=[]){
       input.id=fieldId;input.type=type;input.value=value;input.autocomplete='off';
       if(type==='number')input.step='any';
       input.addEventListener('input',()=>{
-        reading[fieldId.endsWith('_name')?'name':fieldId.endsWith('_start')?'start':'end']=input.value;
-        if(fieldId.endsWith('_name')&&!reading.start){
-          const previous=findPreviousCustomEnd(input.value);
+        reading[fieldId.endsWith('_client')?'client':fieldId.endsWith('_name')?'name':fieldId.endsWith('_start')?'start':'end']=input.value;
+        if((fieldId.endsWith('_name')||fieldId.endsWith('_client'))&&!reading.start){
+          const previous=findPreviousCustomEnd(reading.name,reading.client);
           if(previous!==null){reading.start=String(previous);const startInput=$('custom_'+reading.id+'_start');if(startInput)startInput.value=reading.start;}
         }
         updateCustomDifference(card,reading);
       });
       wrap.appendChild(label);wrap.appendChild(input);fields.appendChild(wrap);
     };
+    makeField('custom_'+reading.id+'_client','Име на клиента','Client name',reading.client);
     makeField('custom_'+reading.id+'_name','Име на графата','Reading name',reading.name);
     makeField('custom_'+reading.id+'_start','Начална стойност','Starting value',reading.start,'number');
     makeField('custom_'+reading.id+'_end','Крайна стойност','Ending value',reading.end,'number');
@@ -1069,13 +1070,13 @@ function updateCustomDifference(card,reading){
   if(a===''||b===''||!Number.isFinite(Number(a))||!Number.isFinite(Number(b))){out.textContent='—';return;}
   out.textContent=(Number(b)-Number(a)).toLocaleString(lang==='bg'?'bg-BG':'en-GB',{maximumFractionDigits:6});
 }
-function findPreviousCustomEnd(name){
-  const client=$('client')?.value.trim().toLowerCase(),key=String(name||'').trim().toLowerCase();
+function findPreviousCustomEnd(name,clientName){
+  const client=String(clientName||$('client')?.value||'').trim().toLowerCase(),key=String(name||'').trim().toLowerCase();
   if(!client||!key)return null;
-  const matches=archiveData().filter(p=>(p.pno||'')!==$('pno').value&&(p.client||'').trim().toLowerCase()===client&&Array.isArray(p.customReadings))
+  const matches=archiveData().filter(p=>(p.pno||'')!==$('pno').value&&Array.isArray(p.customReadings))
     .sort((a,b)=>(new Date(toISODate(b.date)||'1970-01-01')-new Date(toISODate(a.date)||'1970-01-01'))||((b.savedAt||0)-(a.savedAt||0)));
   for(const p of matches){
-    const r=p.customReadings.find(x=>String(x.name||'').trim().toLowerCase()===key&&String(x.end??'').trim()!=='');
+    const r=p.customReadings.find(x=>String(x.name||'').trim().toLowerCase()===key&&String(x.client||p.client||'').trim().toLowerCase()===client&&String(x.end??'').trim()!=='');
     if(r)return r.end;
   }
   return null;
@@ -1132,7 +1133,7 @@ async function newProtocol(){
   if(last.c2!==undefined&&last.c2!=='')$('c1').value=last.c2;
   if(last.m2!==undefined&&last.m2!=='')$('m1').value=last.m2;
  }
- renderCustomReadings((last?.customReadings||[]).map(r=>({...r,start:r.end??'',end:''})));
+ renderCustomReadings((last?.customReadings||[]).map(r=>({...r,client:r.client||last.client||'',start:r.end??'',end:''})));
  calc();window.scrollTo({top:0,behavior:'smooth'});
  if(currentUser&&currentCompanyId){
   try{
