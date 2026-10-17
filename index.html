@@ -1304,7 +1304,7 @@ window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutResto
 function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
-function archiveDateISO(v){let s=String(v||'').trim(),m=s.match(/(\\d{1,2})[.\\/](\\d{1,2})[.\\/](\\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');m=s.match(/(\\d{4})-(\\d{2})-(\\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
+function archiveDateISO(v){const s=String(v||'').trim();let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=s.match(/(\d{1,2})[./](\d{1,2})[./](\d{4})/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
 function renderArchive(){
  let a=archiveData(),box=$('archiveList');
  if(!a.length){box.innerHTML='<p>'+(lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}
