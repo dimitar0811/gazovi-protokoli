@@ -990,7 +990,7 @@ async function saveCloud(d){
   d.created_by=row.created_by;d.updated_by=row.updated_by;d.createdByEmail=row.created_by_email;d.updatedByEmail=row.updated_by_email;
   return true;
 }
-async function deleteCloud(d){if(!currentUser||!currentCompanyId||!d?.pno)return;await sb.from('protocols').delete().eq('company_id',currentCompanyId).eq('pno',d.pno)}
+async function deleteCloud(d){if(currentUserRole!=='admin'){alert('Само администраторът може да изтрива протоколи.');return false}if(!currentUser||!currentCompanyId||!d?.pno)return false;const {error}=await sb.from('protocols').delete().eq('company_id',currentCompanyId).eq('pno',d.pno);if(error){alert('Протоколът не е изтрит от облачния архив: '+error.message);return false}return true}
 
 let protocolZoom=1;
 function changeProtocolZoom(delta){
@@ -1340,11 +1340,11 @@ function renderArchive(){
   return text&&(!date||protocolDate===date);
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
- box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')
+ box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button>${currentUserRole==='admin'?'<button class="secondary" onclick="deleteArchived('+i+')">'+(lang==='bg'?'Изтрий':'Delete')+'</button>':''}</div></div>`).join('')
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
-function deleteArchived(i){let a=archiveData(),d=a[i];if(!d)return;if(confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?')){a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));deleteCloud(d);renderArchive()}}
+async function deleteArchived(i){if(currentUserRole!=='admin'){alert('Само администраторът може да изтрива протоколи.');return}let a=archiveData(),d=a[i];if(!d)return;if(!confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?'))return;if(currentUser&&currentCompanyId){const ok=await deleteCloud(d);if(!ok)return}a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));renderArchive()}
 
 async function createSigningLink(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
