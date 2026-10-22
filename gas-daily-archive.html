@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="bg"><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Архив — Дневен протокол АГРС База Чепеларе</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{font-family:Arial,sans-serif;color:#17212b;background:#f3f5f7}body{margin:0;padding:14px;max-width:850px;margin:auto}h1{font-size:21px}button{background:#145da0;color:#fff;border:0;border-radius:7px;padding:10px 13px;font-size:15px;cursor:pointer}.secondary{background:#4d5965}.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.archive-item{background:#fff;padding:12px;border:1px solid #ccd3d9;border-radius:8px;margin:9px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.archive-meta{flex:1;overflow-wrap:anywhere}.archive-actions{display:flex;flex-wrap:wrap;gap:7px}.danger{background:#b42318}.status{font-size:14px;color:#a33}.muted{color:#58636d;font-size:14px}@media(max-width:520px){.archive-item{display:block}.archive-actions{margin-top:10px}}
+</style></head><body>
+<div class="actions"><button class="secondary" onclick="location.href='gas-daily.html?v=20261022fix4'">← Назад към дневния протокол</button></div>
+<h1>Архив на дневните протоколи — АГРС База Чепеларе</h1>
+<p class="muted">Изберете „Отвори“, за да заредите протокола в страницата на дневния протокол. Изтриването е налично както досега.</p>
+<div id="status" class="status" aria-live="polite"></div><div id="archiveList">Зареждане на архива…</div>
+<script>
+const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
+const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+function status(s){$('status').textContent=s}
+async function user(){const {data,error}=await sb.auth.getUser();if(error||!data.user)throw new Error('Първо влезте в основното приложение със своя профил.')}
+async function loadArchive(){try{await user();const {data,error}=await sb.from('gas_daily_protocols').select('id,protocol_date,protocol_time,checker_name,consumption').order('protocol_date',{ascending:false}).order('protocol_time',{ascending:false}).limit(100);if(error)throw error;const list=$('archiveList');list.innerHTML='';if(!data.length){list.textContent='Няма записани дневни протоколи.';return}data.forEach(d=>{const div=document.createElement('div');div.className='archive-item';const meta=document.createElement('div');meta.className='archive-meta';const strong=document.createElement('strong');strong.textContent=d.protocol_date+' '+(d.protocol_time||'');const details=document.createElement('div');details.textContent=(d.checker_name||'Без име')+' — разход: '+(d.consumption??'—');meta.append(strong,details);const controls=document.createElement('div');controls.className='archive-actions';const open=document.createElement('button');open.textContent='Отвори';open.onclick=()=>location.href='gas-daily.html?record='+encodeURIComponent(d.id)+'&v=20261022fix4';const del=document.createElement('button');del.textContent='Изтрий';del.className='danger';del.onclick=()=>deleteRecord(d.id,d.protocol_date);controls.append(open,del);div.append(meta,controls);list.appendChild(div)})}catch(e){status('Архивът не се отвори: '+(e.message||e)+' Проверете дали сте влезли в основното приложение.');$('archiveList').textContent=''}}
+async function deleteRecord(id,date){if(!confirm('Сигурни ли сте, че искате да изтриете дневния протокол от '+date+'? Това действие не може да бъде отменено.'))return;try{await user();const {error}=await sb.from('gas_daily_protocols').delete().eq('id',id);if(error)throw error;status('Протоколът е изтрит от дневния архив.');await loadArchive()}catch(e){status('Неуспешно изтриване: '+(e.message||e))}}
+loadArchive();
+</script></body></html>
