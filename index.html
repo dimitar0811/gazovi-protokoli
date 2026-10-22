@@ -1584,7 +1584,7 @@ function setupCompactMode(){
     if(grid)body.appendChild(grid);
     d.append(sum,body);h.replaceWith(d);
   }
-  [['Коректор',['c1','c2'],'Данни за коректора — марка, номер и дати'],['Разходомер',['m1','m2'],'Данни за разходомера — марка, номер и дати']].forEach(([heading,visibleIds,summaryText])=>{
+  [['Коректор',['c1','c2','mechanicalReading'],'Данни за коректора — марка, номер и дати'],['Разходомер',['m1','m2'],'Данни за разходомера — марка, номер и дати']].forEach(([heading,visibleIds,summaryText])=>{
     const section=sections.find(s=>s.querySelector('h3')?.textContent.trim()===heading);
     if(!section||section.dataset.compactReady)return;
     const grid=section.querySelector('.grid');if(!grid)return;
