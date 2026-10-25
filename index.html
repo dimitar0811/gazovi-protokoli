@@ -1132,6 +1132,11 @@ function addCustomReading(){
 function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;o.customReadings=collectCustomReadings();return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
+const PDF_ARCHIVE_DB='gasProtocolPdfArchive';
+function openPdfArchiveDb(){return new Promise((resolve,reject)=>{if(!window.indexedDB){reject(new Error('Този браузър не поддържа локален архив на PDF файлове.'));return;}const req=indexedDB.open(PDF_ARCHIVE_DB,1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('pdfs'))db.createObjectStore('pdfs',{keyPath:'pno'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('Неуспешно отваряне на PDF архива.'));});}
+async function saveArchivedPdf(pno,filename,blob){const db=await openPdfArchiveDb();try{await new Promise((resolve,reject)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({pno:String(pno||''),filename:String(filename||'protokol.pdf'),blob,savedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('PDF файлът не беше записан.'));tx.onabort=()=>reject(tx.error||new Error('Записът на PDF файла беше прекъснат.'));});}finally{db.close();}}
+async function downloadArchivedPdf(i){const d=archiveData()[i];if(!d)return;let db;try{db=await openPdfArchiveDb();const item=await new Promise((resolve,reject)=>{const tx=db.transaction('pdfs','readonly'),req=tx.objectStore('pdfs').get(String(d.pno||''));req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});if(!item?.blob){alert('За този стар протокол още няма запазен PDF. Отвори протокола и го изпрати/генерирай отново, за да се запази.');return;}const url=URL.createObjectURL(item.blob),a=document.createElement('a');a.href=url;a.download=item.filename||('Protokol-'+(d.pno||'')+'.pdf');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){alert('Не успях да отворя PDF файла от архива: '+(e?.message||'неизвестна грешка'));}finally{if(db)db.close();}}
+
 async function save(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
   if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
@@ -1356,11 +1361,11 @@ function renderArchive(){
   return text&&(!date||protocolDate===date);
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
- box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button>${currentUserRole==='admin'?'<button class="secondary" onclick="deleteArchived('+i+')">'+(lang==='bg'?'Изтрий':'Delete')+'</button>':''}</div></div>`).join('')
+ box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf('+i+')">PDF</button></div></div>`).join('')
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
-async function deleteArchived(i){if(currentUserRole!=='admin'){alert('Само администраторът може да изтрива протоколи.');return}let a=archiveData(),d=a[i];if(!d)return;if(!confirm((lang==='bg'?'Да изтрия ли протокол ':'Delete protocol ')+(d.pno||'')+'?'))return;if(currentUser&&currentCompanyId){const ok=await deleteCloud(d);if(!ok)return}a.splice(i,1);localStorage.setItem('gasProtocolArchive',JSON.stringify(a));renderArchive()}
+async function deleteArchived(i){alert(lang==='bg'?'Архивните протоколи не могат да се изтриват от приложението.':'Archived protocols cannot be deleted from the app.');}
 
 async function createSigningLink(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Първо въведете клиент / фирма.':'Enter client / company first.');return;}
@@ -1561,6 +1566,7 @@ async function shareFile(channel='viber'){
     const safePart=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,50);
     const filename='Protokol-'+(safePart($('pno').value)||'bez-nomer')+'-'+(safePart($('client').value)||'klient')+'.pdf';
     const file=new File([blob],filename,{type:'application/pdf'});
+    try{await saveArchivedPdf($('pno').value,filename,blob);}catch(archiveError){console.error('PDF archive save failed:',archiveError);alert('PDF файлът е подготвен, но не успях да го запазя в архива на това устройство: '+(archiveError?.message||'неизвестна грешка'));}
     // Native share sheet can attach the actual PDF to email or messaging apps.
     const clientName=($('client').value||'').trim();
     const protocolNumber=($('pno').value||'').trim();
