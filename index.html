@@ -791,7 +791,8 @@ details.compact-details[open]>summary:before{content:"−"}
   <p>Изпрати PDF по имейл или защитен линк за преглед във Viber.</p>
   <button type="button" style="width:100%;margin:6px 0" onclick="sendAccountingEmail()">✉️ Изпрати по имейл</button>
   <button type="button" class="secondary" style="width:100%;margin:6px 0" onclick="editAccountingEmail()">⚙️ Смяна на имейла</button>
-  <button type="button" style="width:100%;margin:6px 0;background:#665cac" onclick="shareProtocol('viber')">💬 Изпрати по Viber</button>
+  <button type="button" style="width:100%;margin:6px 0;background:#665cac" onclick="shareFile('viber')">📄 Изпрати PDF файл по Viber</button>
+  <button type="button" class="secondary" style="width:100%;margin:6px 0" onclick="shareProtocol('viber')">🔗 Изпрати защитен линк по Viber</button>
   <button type="button" class="secondary" style="width:100%;margin-top:10px" onclick="closeAccountingMenu()">Затвори</button>
  </div>
 </div>
@@ -1361,7 +1362,7 @@ function renderArchive(){
   return text&&(!date||protocolDate===date);
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
- box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf('+i+')">PDF</button></div></div>`).join('')
+ box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">PDF</button></div></div>`).join('')
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
