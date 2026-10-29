@@ -1674,26 +1674,5 @@ function pickDate(id){const p=$(id+'Picker'),field=$(id);if(!p||!field)return;p.
 function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{const field=$(id),picker=$(id+'Picker');if(!field)return;if(id!=='date')field.addEventListener('click',()=>pickDate(id));if(picker)picker.addEventListener('change',()=>{if(picker.value)field.value=formatBGDate(picker.value);});});}
 wireDates();
 </script>
-<script>
-/* Test whether Android/Gboard is dismissing its language picker because the page declares Bulgarian. */
-(function(){
-  const root=document.documentElement;
-  const originalLang=root.getAttribute('lang')||'bg';
-  document.addEventListener('focusin',function(event){
-    const field=event.target;
-    if(field&&field.matches&&field.matches('input,textarea,select')){
-      root.setAttribute('lang','und');
-      field.setAttribute('lang','und');
-    }
-  });
-  document.addEventListener('focusout',function(){
-    setTimeout(function(){
-      if(!document.activeElement||!document.activeElement.matches('input,textarea,select')){
-        root.setAttribute('lang',originalLang);
-      }
-    },0);
-  });
-})();
-</script>
 </body>
 </html>
