@@ -1674,5 +1674,14 @@ function pickDate(id){const p=$(id+'Picker'),field=$(id);if(!p||!field)return;p.
 function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{const field=$(id),picker=$(id+'Picker');if(!field)return;if(id!=='date')field.addEventListener('click',()=>pickDate(id));if(picker)picker.addEventListener('change',()=>{if(picker.value)field.value=formatBGDate(picker.value);});});}
 wireDates();
 </script>
+<script>
+/* Keep Gboard's language choice independent of the page's Bulgarian UI language. */
+document.addEventListener('focusin',function(event){
+  const field=event.target;
+  if(field&&field.matches&&field.matches('input,textarea,select')){
+    field.setAttribute('lang','und');
+  }
+});
+</script>
 </body>
 </html>
