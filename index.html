@@ -1333,7 +1333,7 @@ function enableMovableZoomControls(){
  }
 }
 
-enableMovableZoomControls();
+if(!new URLSearchParams(window.location.search).has('testNoZoomControls')) enableMovableZoomControls();
 let printLayoutRestore=null;
 function printProtocol(){
   saveSilently();
