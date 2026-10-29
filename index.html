@@ -1327,10 +1327,7 @@ function enableMovableZoomControls(){
  });
  const stop=()=>{dragging=false;handle.style.cursor='move';};
  handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
- // Diagnostic A/B test: add ?testNoZoomResize=1 to temporarily disable only this resize handler.
- if(!new URLSearchParams(window.location.search).has('testNoZoomResize')) {
-  window.addEventListener('resize',()=>{const r=panel.getBoundingClientRect();panel.style.left=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,r.left))+'px';panel.style.top=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,r.top))+'px';});
- }
+ window.addEventListener('resize',()=>{const r=panel.getBoundingClientRect();panel.style.left=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,r.left))+'px';panel.style.top=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,r.top))+'px';});
 }
 
 enableMovableZoomControls();
