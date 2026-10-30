@@ -689,6 +689,7 @@ details.compact-details[open]>summary:before{content:"−"}
   </div>
 </div>
 <main>
+<div class="no-print" style="max-width:1050px;margin:10px auto;padding:10px 12px;background:#eef4f8;border:1px solid #cbd8e4;border-radius:9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label for="protocolTypeSelect" style="font-weight:bold">Вид протокол:</label><select id="protocolTypeSelect" onchange="changeProtocolType(this.value)" style="padding:10px;border:1px solid #9aabba;border-radius:7px;font-size:16px;flex:1;min-width:220px"><option value="measurement" data-bg="Газов протокол (измерване)" data-en="Gas protocol (measurement)">Газов протокол (измерване)</option><option value="removal" data-bg="Протокол за демонтаж" data-en="Removal protocol">Протокол за демонтаж</option><option value="installation" data-bg="Протокол за монтаж" data-en="Installation protocol">Протокол за монтаж</option></select></div>
 <div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:3px;width:44px;min-height:44px;box-sizing:border-box;background:#fff;border:2px solid #123b60;border-radius:50%;box-shadow:0 3px 12px #0003">
   <button type="button" id="zoomDragHandle" onclick="toggleZoomControls()" aria-label="Покажи или скрий бутоните за увеличение" aria-expanded="false" title="Натисни за бутоните; плъзни за преместване" style="display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;color:#123b60;background:transparent;border:0;padding:4px;min-width:34px;min-height:34px;cursor:move;touch-action:none;user-select:none">🔍</button>
   <div id="zoomActions" style="display:none;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;max-width:calc(100vw - 32px)">
@@ -731,19 +732,19 @@ details.compact-details[open]>summary:before{content:"−"}
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="cbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="cs"></div>
 <div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
-<div class="span2"><label data-bg="Начално показание на коректора m³" data-en="Corrector start reading m³">Начално показание на коректора m³</label><input id="c1" type="number" step="any"></div>
-<div class="span2"><label data-bg="Крайно показание на коректора m³" data-en="Corrector end reading m³">Крайно показание на коректора m³</label><input id="c2" type="number" step="any"></div>
+<div class="span2"><label id="c1Label" data-bg="Начално показание на коректора m³" data-en="Corrector start reading m³">Начално показание на коректора m³</label><input id="c1" type="number" step="any"></div>
+<div class="span2" id="c2Field"><label id="c2Label" data-bg="Крайно показание на коректора m³" data-en="Corrector end reading m³">Крайно показание на коректора m³</label><input id="c2" type="number" step="any"></div>
 <div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
-</div><div class="calc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">10.000 m³</b></div></div>
+</div><div class="calc" id="cCalc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">10.000 m³</b></div></div>
 
 <div class="section"><h3 data-bg="Разходомер" data-en="GAS METER">Разходомер</h3><div class="grid">
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="mbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="ms"></div>
 <div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
-<div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
-<div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
+<div class="span2"><label id="m1Label" data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
+<div class="span2" id="m2Field"><label id="m2Label" data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
 <div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
-</div><div class="calc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
+</div><div class="calc" id="mCalc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
 
 <div class="section" id="customReadingsSection"><h3 data-bg="Допълнителни показания" data-en="ADDITIONAL READINGS">Допълнителни показания</h3><div id="customReadingsList"></div><button type="button" class="secondary no-print" onclick="addCustomReading()" data-bg="＋ Добави графа" data-en="＋ Add reading">＋ Добави графа</button></div>
 <div class="section"><h3 data-bg="Забележки / заключение" data-en="NOTES / CONCLUSION">Забележки / заключение</h3><textarea id="notes"></textarea></div>
@@ -981,6 +982,7 @@ async function loadCloud(){
 }
 function cloudToLocal(x){
   const d={...x};
+  d.protocolType=protocolTypeFromNumber(x.pno||x.protocol_number||'');
   const decoded=decodeNotesWithReadings(x.notes||'');d.notes=decoded.notes;d.customReadings=decoded.customReadings;
   d.pno=x.pno||x.protocol_number||'';d.date=x.date||'';d.techSig=x.tech_sig||'';d.clientSig=x.client_sig||'';
   d.techName=x.tech_name||'';d.clientName=x.client_name||'';
@@ -1024,6 +1026,21 @@ function changeProtocolZoom(delta){
   const reset=$('zoomControls')?.querySelector('button[aria-label="Нормален размер"]');
   if(reset) reset.textContent=Math.round(protocolZoom*100)+'%';
 }
+function protocolTypeFromNumber(pno){const n=String(pno||'').toUpperCase();return n.startsWith('DEM-')?'removal':n.startsWith('MON-')?'installation':'measurement'}
+function protocolNumberPrefix(type,now=new Date()){const day=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');return (type==='removal'?'DEM-':type==='installation'?'MON-':'GP-')+day}
+function nextProtocolNumber(type=protocolType){const prefix=protocolNumberPrefix(type);const used=archiveData().map(x=>String(x.pno||'')).filter(n=>n.startsWith(prefix+'-'));const max=used.reduce((v,n)=>{const m=n.match(/-(\d+)$/);return m?Math.max(v,Number(m[1])):v},0);return prefix+'-'+String(max+1).padStart(3,'0')}
+let protocolType='measurement';
+function applyProtocolType(type){
+ protocolType=['removal','installation'].includes(type)?type:'measurement';
+ const sel=$('protocolTypeSelect');if(sel)sel.value=protocolType;
+ const isMeasure=protocolType==='measurement',verb=protocolType==='removal'?'демонтаж':'монтаж',verbEn=protocolType==='removal'?'removal':'installation';
+ const title=document.querySelector('#sheet .title h2');
+ if(title){title.dataset.bg=isMeasure?'ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ':'ПРОТОКОЛ ЗА '+verb.toUpperCase()+' НА РАЗХОДОМЕР И КОРЕКТОР';title.dataset.en=isMeasure?'GAS MEASUREMENT PROTOCOL':'GAS METER AND CORRECTOR '+verbEn.toUpperCase()+' PROTOCOL';title.textContent=lang==='bg'?title.dataset.bg:title.dataset.en;}
+ const fields=[['c1Label','Начално показание на коректора m³','Corrector start reading m³','Показание при '+verb+' на коректора m³','Corrector reading at '+verbEn+' m³'],['c2Label','Крайно показание на коректора m³','Corrector end reading m³','',''],['m1Label','Начално показание m³','Start reading m³','Показание при '+verb+' на разходомера m³','Gas meter reading at '+verbEn+' m³'],['m2Label','Крайно показание m³','End reading m³','','']];
+ fields.forEach(([id,bg,en,sbg,sen])=>{const el=$(id);if(!el)return;el.dataset.bg=isMeasure?bg:sbg;el.dataset.en=isMeasure?en:sen;el.textContent=lang==='bg'?el.dataset.bg:el.dataset.en;});
+ ['c2Field','m2Field','cCalc','mCalc'].forEach(id=>{const el=$(id);if(el)el.style.display=isMeasure?'':'none';});
+}
+function changeProtocolType(type){applyProtocolType(type);$('pno').value=nextProtocolNumber(protocolType)}
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
 async function shareApp(){
@@ -1130,7 +1147,7 @@ function addCustomReading(){
   const input=$('custom_'+id+'_name');if(input)input.focus();
 }
 
-function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;o.customReadings=collectCustomReadings();return o}
+function collect(){let o={};ids.forEach(id=>o[id]=$(id).value);o.protocolType=protocolType;o.cUsage=num('c2')-num('c1');o.mUsage=num('m2')-num('m1');o.techSig=$('techSig').innerHTML;o.clientSig=$('clientSig').innerHTML;o.techName=$('techName').value;o.clientName=$('clientName').value;o.customReadings=collectCustomReadings();return o}
 function archiveData(){try{return JSON.parse(localStorage.getItem('gasProtocolArchive')||'[]')}catch(e){return []}}
 function saveArchive(d){let a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);if(i>=0)a[i]=d;else a.unshift(d);a.sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));localStorage.setItem('gasProtocolArchive',JSON.stringify(a));}
 const PDF_ARCHIVE_DB='gasProtocolPdfArchive';
@@ -1152,7 +1169,7 @@ async function saveProtocolPdf(d){
 async function save(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
   if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
-  if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);
+  if(!$('pno').value)$('pno').value=nextProtocolNumber(protocolType);
   let d=collect();d.savedAt=Date.now();
   const old=archiveData().find(x=>x.pno===d.pno);
   d.created_by=old?.created_by||currentUser?.id||'';
@@ -1166,11 +1183,11 @@ async function save(){
   const msg=pdfSaved?'Дневният протокол е записан и PDF копие е добавено в отделния PDF архив на това устройство.':'Дневният протокол е записан, но PDF копието не успя да се създаде. Провери интернет връзката и опитай пак.';
   alert(lang==='bg'?(cloudSaved?msg:(msg+' Облачният запис не успя.')):(pdfSaved?'Daily protocol saved with a PDF copy on this device.':'Daily protocol saved, but the PDF copy could not be created.'));
 }
-function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[])}}catch(e){}calc()}
+function load(){try{let d=JSON.parse(localStorage.getItem('gasProtocolV2'));if(d){ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);applyProtocolType(d.protocolType||protocolTypeFromNumber(d.pno));}}catch(e){}calc()}
 async function newProtocol(){
  if(!confirm(lang==='bg'?'Да започна ли нов протокол? Предишният протокол ще остане в архива. Постоянните данни ще се пренесат, а подписите и дневните показания ще се изчистят.':'Start a new protocol? The previous protocol will remain in the archive. Permanent details will be copied; signatures and daily readings will be cleared.'))return;
  const now=new Date();
- const prefix=String(now.getFullYear())+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+ const prefix=protocolNumberPrefix(protocolType,now);
  const current=collect();
  const client=String(current.client||'').trim();
  const a=archiveData();
@@ -1366,7 +1383,7 @@ function printProtocol(){
   window.print();
 }
 window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutRestore();});
-function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value='GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
+function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value=nextProtocolNumber(protocolType);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
 function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
@@ -1383,7 +1400,7 @@ function renderArchive(){
  box.innerHTML=rows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(d.site||d.settlement||d.locality||d.city||d.town||d.address||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('')
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
+function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);applyProtocolType(d.protocolType||protocolTypeFromNumber(d.pno));closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
 async function deleteArchived(i){
  const a=archiveData(),d=a[i];if(!d)return;
  if(!confirm('Да изтрия ли дневния протокол '+(d.pno||'')+' от обичайния архив? Запазеното PDF копие няма да се изтрие.'))return;
@@ -1671,7 +1688,7 @@ function toISODate(v){let m=(v||'').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](
 function openDatePicker(){let iso=toISODate($('date').value);$('datePicker').value=iso||new Date().toISOString().slice(0,10);if($('datePicker').showPicker)$('datePicker').showPicker();else{$('datePicker').focus();$('datePicker').click()}}
 $('datePicker').addEventListener('change',()=>{$('date').value=formatBGDate($('datePicker').value)});
 $('date').addEventListener('blur',()=>{let iso=toISODate($('date').value);if(iso)$('date').value=formatBGDate(iso)});
-$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');try{setupCompactMode()}catch(e){console.error('Compact view setup failed:',e)}sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
+$('date').value=new Date().toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});$('datePicker').value=toISODate($('date').value);load();setLang('bg');applyProtocolType(protocolType);try{setupCompactMode()}catch(e){console.error('Compact view setup failed:',e)}sb.auth.getSession().then(({data})=>{if(data.session)onSignedIn(data.session.user);});
 function pickDate(id){const p=$(id+'Picker'),field=$(id);if(!p||!field)return;p.value=toISODate(field.value)||'';p.onchange=()=>{if(p.value)field.value=formatBGDate(p.value);};try{if(typeof p.showPicker==='function')p.showPicker();else p.click();}catch(e){p.click();}}
 function wireDates(){['date','cd','cv','md','mv'].forEach(id=>{const field=$(id),picker=$(id+'Picker');if(!field)return;if(picker)picker.addEventListener('change',()=>{if(picker.value)field.value=formatBGDate(picker.value);});});}
 wireDates();
