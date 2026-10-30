@@ -717,7 +717,7 @@ details.compact-details[open]>summary:before{content:"−"}
 </div>
 
 <div class="sheet" id="sheet">
-<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span class="date-wrap"><input id="date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('date')">📅</button><input id="datePicker" type="date" class="date-native" aria-label="Избор на дата" tabindex="-1"></span></small></div>
+<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span class="date-wrap"><input id="date" type="text" inputmode="text" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('date')">📅</button><input id="datePicker" type="date" class="date-native" aria-label="Избор на дата" tabindex="-1"></span></small></div>
 
 <div class="section"><h3 data-bg="Клиент и обект" data-en="CLIENT AND SITE">Клиент и обект</h3><div class="grid">
 <div class="span2"><label data-bg="Клиент / фирма" data-en="Client / Company">Клиент / фирма</label><input id="client"></div>
@@ -730,19 +730,19 @@ details.compact-details[open]>summary:before{content:"−"}
 <div class="section"><h3 data-bg="Коректор" data-en="CORRECTOR">Коректор</h3><div class="grid">
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="cbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="cs"></div>
-<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
 <div class="span2"><label data-bg="Начално показание на коректора m³" data-en="Corrector start reading m³">Начално показание на коректора m³</label><input id="c1" type="number" step="any"></div>
 <div class="span2"><label data-bg="Крайно показание на коректора m³" data-en="Corrector end reading m³">Крайно показание на коректора m³</label><input id="c2" type="number" step="any"></div>
-<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
 </div><div class="calc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">10.000 m³</b></div></div>
 
 <div class="section"><h3 data-bg="Разходомер" data-en="GAS METER">Разходомер</h3><div class="grid">
 <div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="mbm"></div>
 <div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="ms"></div>
-<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
 <div class="span2"><label data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
 <div class="span2"><label data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
-<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
 </div><div class="calc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
 
 <div class="section" id="customReadingsSection"><h3 data-bg="Допълнителни показания" data-en="ADDITIONAL READINGS">Допълнителни показания</h3><div id="customReadingsList"></div><button type="button" class="secondary no-print" onclick="addCustomReading()" data-bg="＋ Добави графа" data-en="＋ Add reading">＋ Добави графа</button></div>
@@ -1667,7 +1667,7 @@ function setupCompactMode(){
 // Keep protocol fields in their original sections; avoid wrapping active inputs in collapsible details on mobile.
 
 function formatBGDate(v){if(!v)return '';let p=v.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:v}
-function toISODate(v){let m=(v||'').match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
+function toISODate(v){let m=(v||'').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);if(!m)return '';const d=Number(m[1]),mo=Number(m[2]),y=Number(m[3]);const dt=new Date(y,mo-1,d);return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'):''}
 function openDatePicker(){let iso=toISODate($('date').value);$('datePicker').value=iso||new Date().toISOString().slice(0,10);if($('datePicker').showPicker)$('datePicker').showPicker();else{$('datePicker').focus();$('datePicker').click()}}
 $('datePicker').addEventListener('change',()=>{$('date').value=formatBGDate($('datePicker').value)});
 $('date').addEventListener('blur',()=>{let iso=toISODate($('date').value);if(iso)$('date').value=formatBGDate(iso)});
