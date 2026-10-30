@@ -1027,7 +1027,7 @@ function changeProtocolZoom(delta){
   if(reset) reset.textContent=Math.round(protocolZoom*100)+'%';
 }
 function protocolTypeFromNumber(pno){const n=String(pno||'').toUpperCase();return n.startsWith('DEM-')?'removal':n.startsWith('MON-')?'installation':'measurement'}
-function protocolNumberPrefix(type,now=new Date()){const day=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');return (type==='removal'?'DEM-':type==='installation'?'MON-':'GP-')+day}
+function protocolNumberPrefix(type,now=new Date()){const day=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');return (type==='removal'?'DEM-':type==='installation'?'MON-':'')+day}
 function nextProtocolNumber(type=protocolType){const prefix=protocolNumberPrefix(type);const used=archiveData().map(x=>String(x.pno||'')).filter(n=>n.startsWith(prefix+'-'));const max=used.reduce((v,n)=>{const m=n.match(/-(\d+)$/);return m?Math.max(v,Number(m[1])):v},0);return prefix+'-'+String(max+1).padStart(3,'0')}
 let protocolType='measurement';
 function applyProtocolType(type){
@@ -1038,9 +1038,9 @@ function applyProtocolType(type){
  if(title){title.dataset.bg=isMeasure?'ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ':'ПРОТОКОЛ ЗА '+verb.toUpperCase()+' НА РАЗХОДОМЕР И КОРЕКТОР';title.dataset.en=isMeasure?'GAS MEASUREMENT PROTOCOL':'GAS METER AND CORRECTOR '+verbEn.toUpperCase()+' PROTOCOL';title.textContent=lang==='bg'?title.dataset.bg:title.dataset.en;}
  const fields=[['c1Label','Начално показание на коректора m³','Corrector start reading m³','Показание при '+verb+' на коректора m³','Corrector reading at '+verbEn+' m³'],['c2Label','Крайно показание на коректора m³','Corrector end reading m³','',''],['m1Label','Начално показание m³','Start reading m³','Показание при '+verb+' на разходомера m³','Gas meter reading at '+verbEn+' m³'],['m2Label','Крайно показание m³','End reading m³','','']];
  fields.forEach(([id,bg,en,sbg,sen])=>{const el=$(id);if(!el)return;el.dataset.bg=isMeasure?bg:sbg;el.dataset.en=isMeasure?en:sen;el.textContent=lang==='bg'?el.dataset.bg:el.dataset.en;});
- ['c2Field','m2Field','cCalc','mCalc'].forEach(id=>{const el=$(id);if(el)el.style.display=isMeasure?'':'none';});
+ ['c2Field','m2Field','cCalc','mCalc','customReadingsSection'].forEach(id=>{const el=$(id);if(el)el.style.display=isMeasure?'':'none';});
 }
-function changeProtocolType(type){applyProtocolType(type);$('pno').value=nextProtocolNumber(protocolType)}
+function changeProtocolType(type){applyProtocolType(type);['c1','c2','m1','m2'].forEach(id=>$(id).value='');$('pno').value=protocolType==='measurement'?'GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4):nextProtocolNumber(protocolType);calc()}
 function calc(){$('cu').textContent=(num('c2')-num('c1')).toFixed(3)+' m³';$('mu').textContent=(num('m2')-num('m1')).toFixed(3)+' m³'}
 ['c1','c2','m1','m2'].forEach(id=>$(id).addEventListener('input',calc));
 async function shareApp(){
@@ -1169,7 +1169,7 @@ async function saveProtocolPdf(d){
 async function save(){
   if(!$('client').value.trim()){alert(lang==='bg'?'Въведете клиент / фирма.':'Enter client / company.');return}
   if(currentUser&&!currentCompanyId){if(!(await ensureCompany()))return;}
-  if(!$('pno').value)$('pno').value=nextProtocolNumber(protocolType);
+  if(!$('pno').value)$('pno').value=protocolType==='measurement'?'GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4):nextProtocolNumber(protocolType);
   let d=collect();d.savedAt=Date.now();
   const old=archiveData().find(x=>x.pno===d.pno);
   d.created_by=old?.created_by||currentUser?.id||'';
@@ -1383,7 +1383,7 @@ function printProtocol(){
   window.print();
 }
 window.addEventListener('afterprint',()=>{if(printLayoutRestore)printLayoutRestore();});
-function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value=nextProtocolNumber(protocolType);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
+function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').value)$('pno').value=protocolType==='measurement'?'GP-'+new Date().toLocaleDateString('bg-BG').replaceAll('.','')+'-'+String(Date.now()).slice(-4):nextProtocolNumber(protocolType);let d=collect();d.savedAt=Date.now();localStorage.setItem('gasProtocolV2',JSON.stringify(d));saveArchive(d);return true;}
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
 function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
