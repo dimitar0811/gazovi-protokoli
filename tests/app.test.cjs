@@ -29,7 +29,9 @@ test('Android keyboard language switching is not overridden by app scripts', () 
 test('save distinguishes local save from cloud save failure', () => {
   assert.match(html, /async function save\(\)/);
   assert.match(html, /const cloudSaved=await saveCloud\(d\)/);
-  assert.match(html, /Протоколът е записан локално, но не и в облака/);
+  assert.match(html, /localStorage\.setItem\('gasProtocolV2',JSON\.stringify\(d\)\);saveArchive\(d\);/);
+  assert.match(html, /const msg=pdfSaved\?/);
+  assert.match(html, /cloudSaved\?msg:/);
 });
 
 test('date formatting and consumption calculations remain present', () => {
