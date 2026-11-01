@@ -1209,7 +1209,7 @@ async function newProtocol(){
  $('techSig').innerHTML='';$('clientSig').innerHTML='';
  $('techName').value=source.techName||last?.techName||'';
  $('clientName').value=source.clientName||last?.clientName||'';
- $('date').value=now.toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});
+ $('date').value='';$('datePicker').value='';
  $('pno').value=newNumber;
  // Пренасяме постоянните данни за същия клиент, но не и дневните показания.
  ['client','eik','tech','site','contact','cbm','cs','cd','cv','mbm','ms','md','mv','notes'].forEach(id=>{
