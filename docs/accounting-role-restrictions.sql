@@ -68,6 +68,7 @@ begin
     and a.approved = true;
 
   if coalesce(v_role, 'user') not in ('admin', 'accounting') then
+    -- Създателят на протокола може само да го изпрати за първи път.
     if tg_op = 'INSERT' then
       if new.accounting_status is not null
          or new.accounting_sent_at is not null
@@ -77,7 +78,13 @@ begin
     elsif new.accounting_status is distinct from old.accounting_status
        or new.accounting_sent_at is distinct from old.accounting_sent_at
        or new.accounting_processed_at is distinct from old.accounting_processed_at then
-      raise exception 'Само счетоводството може да променя статуса за фактуриране.';
+      if new.created_by is distinct from auth.uid()
+         or new.accounting_status is distinct from 'pending'
+         or old.accounting_status is not null
+         or new.accounting_processed_at is not null
+         or new.accounting_sent_at is null then
+        raise exception 'Можете само да изпратите собствен протокол към счетоводството.';
+      end if;
     end if;
   end if;
   return new;
