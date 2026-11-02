@@ -1746,6 +1746,14 @@ async function openInvoiceProtocol(pno){
  if(i>=0)a[i]=d;else{a.unshift(d);i=0;}
  localStorage.setItem('gasProtocolArchive',JSON.stringify(a));
  closeInvoicingList();openArchived(i);
+ $('protocolMain').style.display='block';
+ $('zoomControls').style.display='none';
+ if(currentUserRole==='accounting'){
+  $('protocolMain').querySelectorAll('input,textarea').forEach(el=>el.readOnly=true);
+  $('protocolMain').querySelectorAll('select').forEach(el=>el.disabled=true);
+  $('protocolMain').querySelectorAll('button').forEach((btn,index)=>{if(index!==0)btn.style.display='none';});
+  $('protocolMain').querySelectorAll('.actions').forEach(el=>el.style.display='none');
+ }
 }
 async function setInvoiceStatus(pno,status){
  if(!['admin','accounting'].includes(currentUserRole)){alert('Само счетоводството може да променя статуса.');return;}
