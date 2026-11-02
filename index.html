@@ -1526,6 +1526,7 @@ function renderArchive(){
   const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
   return `<details class="archive-folder" style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${dateHtml||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>'}</div></details>`;
  }).join('');
+ box.querySelectorAll('details').forEach(folder=>folder.open=false);
  if(!rows.length&&a.length)box.insertAdjacentHTML('afterbegin','<p>Няма протоколи, отговарящи на търсенето.</p>');
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
