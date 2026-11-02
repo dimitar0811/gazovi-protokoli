@@ -846,6 +846,7 @@ const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
 const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let authMode='login', currentUser=null, currentUserRole='user';
+function isAccountingRole(){return ['accounting','accountant','счетоводство','счетоводител'].includes(String(currentUserRole||'').trim().toLowerCase());}
 function authMessage(msg,ok=false){$('authMsg').textContent=msg;$('authMsg').style.color=ok?'#167a35':'#b00020'}
 function toggleAuthMode(){authMode=authMode==='login'?'register':'login';$('authPassword2').style.display=authMode==='register'?'block':'none';$('authMainBtn').textContent=authMode==='register'?'Регистрация':'Вход';$('authToggleBtn').textContent=authMode==='register'?'Назад към вход':'Регистрация';$('authSubtitle').textContent=authMode==='register'?'Създаване на нов профил':'Вход в приложението';$('authMsg').textContent='';}
 function authRequestTimeout(promise, label, ms=15000){
@@ -903,18 +904,25 @@ async function showHomeMenu(){
   $('protocolMain').style.display='none';
   $('zoomControls').style.display='none';
   $('invoicingModal').style.display='none';
+  $('homeProtocolBtn').style.display=isAccountingRole()?'none':'block';
+  $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
+  $('homeInvoicingBtn').style.display=(isAccountingRole()||currentUserRole==='admin')?'block':'none';
   $('homeMenu').style.display='block';
 }
 function openInvoicingSection(){
-  if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате достъп до протоколите за фактуриране.');return;}
+  if(!['admin','accounting','accountant','счетоводство','счетоводител'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Нямате достъп до протоколите за фактуриране.');return;}
   openInvoicingList();
 }
 function openProtocolSection(){
+  if(isAccountingRole()){alert('Счетоводният профил има достъп само до протоколите за фактуриране.');showHomeMenu();return;}
   $('homeMenu').style.display='none';
   $('protocolMain').style.display='block';
   $('zoomControls').style.display='flex';
 }
-function openDailySection(){location.href='gas-daily.html?v=20261022fix5';}
+function openDailySection(){
+  if(isAccountingRole()){alert('Счетоводният профил има достъп само до протоколите за фактуриране.');showHomeMenu();return;}
+  location.href='gas-daily.html?v=20261022fix5';
+}
 async function onSignedIn(user){
   if(!user?.email_confirmed_at){
     await sb.auth.signOut();
@@ -940,23 +948,23 @@ async function onSignedIn(user){
     authMessage(accessError?'Не успях да проверя разрешението за достъп. Проверете настройката в Supabase.':'Този имейл няма одобрен достъп. Свържете се с администратора.');
     return;
   }
-  currentUser=user;currentUserRole=access.role||'user';
+  currentUser=user;currentUserRole=String(access.role||'user').trim().toLowerCase();
   $('authGate').style.display='none';
   $('userBar').style.display='flex';
   $('userEmail').textContent=user.email||'';
   $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
   $('invoicingListBtn').style.display='none';
-  $('homeInvoicingBtn').style.display=['admin','accounting'].includes(currentUserRole)?'block':'none';
-  $('homeProtocolBtn').style.display=currentUserRole==='accounting'?'none':'block';
-  $('homeDailyBtn').style.display=currentUserRole==='accounting'?'none':'block';
+  $('homeInvoicingBtn').style.display=(currentUserRole==='admin'||isAccountingRole())?'block':'none';
+  $('homeProtocolBtn').style.display=isAccountingRole()?'none':'block';
+  $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
   const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
-  if(shareButton)shareButton.style.display=currentUserRole==='accounting'?'none':'';
+  if(shareButton)shareButton.style.display=isAccountingRole()?'none':'';
   const invoiceClose=$('invoicingCloseBtn');
-  if(invoiceClose)invoiceClose.style.display=currentUserRole==='accounting'?'none':'';
+  if(invoiceClose)invoiceClose.style.display=isAccountingRole()?'none':'';
   const accountingLogout=$('accountingLogoutBtn');
-  if(accountingLogout)accountingLogout.style.display=currentUserRole==='accounting'?'inline-block':'none';
+  if(accountingLogout)accountingLogout.style.display=isAccountingRole()?'inline-block':'none';
   const accountingLogoutTop=$('accountingLogoutTopBtn');
-  if(accountingLogoutTop)accountingLogoutTop.style.display=currentUserRole==='accounting'?'inline-block':'none';
+  if(accountingLogoutTop)accountingLogoutTop.style.display=isAccountingRole()?'inline-block':'none';
   showHomeMenu();
   try{
     if(await ensureCompany()){
@@ -968,7 +976,7 @@ async function onSignedIn(user){
     console.warn('Cloud setup unavailable; continuing locally',e);
     $('userEmail').textContent=(user.email||'')+' — локален режим';
   }
-  if(currentUserRole==='accounting')openInvoicingList();
+
 }
 let pendingAccessEmail='';
 function manageAccess(){
