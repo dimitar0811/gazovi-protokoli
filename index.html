@@ -958,12 +958,12 @@ async function onSignedIn(user){
   $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
   const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
   if(shareButton)shareButton.style.display=isAccountingRole()?'none':'';
+  const globalLogout=$('userBar').querySelector('button[onclick="logout()"]');
+  if(globalLogout)globalLogout.style.display=isAccountingRole()?'none':'';
   const invoiceClose=$('invoicingCloseBtn');
   if(invoiceClose)invoiceClose.style.display=isAccountingRole()?'none':'';
   const accountingLogout=$('accountingLogoutBtn');
   if(accountingLogout)accountingLogout.style.display=isAccountingRole()?'inline-block':'none';
-  const accountingLogoutTop=$('accountingLogoutTopBtn');
-  if(accountingLogoutTop)accountingLogoutTop.style.display=isAccountingRole()?'inline-block':'none';
   showHomeMenu();
   try{
     if(await ensureCompany()){
