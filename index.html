@@ -1660,7 +1660,7 @@ function renderInvoicingList(){
     const done=x.accounting_status==='processed';
     const sent=x.accounting_sent_at?new Date(x.accounting_sent_at).toLocaleDateString('bg-BG'):'—';
     const locality=locationOf(x)||'—';
-    return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(locality)+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
+    return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(locality)+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button><button type="button" class="custom-reading-remove" data-action="delete" data-pno="'+esc(x.pno||'')+'">Изтрий</button></div></div>';
    }).join('');
    return '<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">'+esc(dateLabel(day==='без-дата'?'':day))+' ('+dayRows.length+')</summary><div style="padding-top:5px">'+cards+'</div></details>';
   }).join('');
@@ -1672,6 +1672,7 @@ function renderInvoicingList(){
   const pno=b.dataset.pno,action=b.dataset.action;
   if(action==='open')await openInvoiceProtocol(pno);
   else if(action==='toggle')await setInvoiceStatus(pno,invoicingRows.find(x=>x.pno===pno)?.accounting_status==='processed'?'pending':'processed');
+  else if(action==='delete')await removeFromInvoicing(pno);
  };
 }
 async function openInvoiceProtocol(pno){
@@ -1690,6 +1691,16 @@ async function setInvoiceStatus(pno,status){
  if(error){alert('Не успях да сменя статуса. Проверете настройките на базата данни. '+error.message);return;}
  const row=invoicingRows.find(x=>x.pno===pno);if(row){row.accounting_status=status;row.accounting_processed_at=updates.accounting_processed_at;}
  renderInvoicingList();
+}
+async function removeFromInvoicing(pno){
+ if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате право да премахвате протоколи от фактуриране.');return;}
+ const row=invoicingRows.find(x=>x.pno===pno);if(!row)return;
+ if(!confirm('Да премахна ли протокол '+pno+' от списъка за фактуриране? Оригиналният протокол в архива няма да бъде изтрит.'))return;
+ const {error}=await sb.from('protocols').update({accounting_status:null,accounting_sent_at:null,accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',pno);
+ if(error){alert('Не успях да премахна протокола от фактуриране: '+error.message);return;}
+ invoicingRows=invoicingRows.filter(x=>x.pno!==pno);
+ renderInvoicingList();
+ alert('Протокол '+pno+' е премахнат от списъка за фактуриране. Оригиналът остава в архива.');
 }
 async function createAccountingLink(){
  if(!currentUser){alert('За защитен линк за фактуриране първо влезте в приложението.');return null;}
