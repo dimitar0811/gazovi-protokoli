@@ -854,7 +854,7 @@ function authRequestTimeout(promise, label, ms=15000){
     new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label+' отне твърде дълго. Проверете интернет връзката и опитайте отново.')),ms)})
   ]).finally(()=>clearTimeout(timer));
 }
-async async function authMain(){
+async function authMain(){
   const email=$('authEmail').value.trim(), password=$('authPassword').value;
   if(!email||!password){authMessage('Въведете имейл и парола.');return}
   if(authMode==='register' && password!==$('authPassword2').value){authMessage('Паролите не съвпадат.');return}
