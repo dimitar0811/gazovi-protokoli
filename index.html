@@ -1427,6 +1427,21 @@ function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
 function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
+async function sendArchivedToAccounting(index){
+ const d=archiveData()[index];
+ if(!d?.pno){alert('Не е намерен протоколът в архива.');return;}
+ if(!currentUser||!currentCompanyId){alert('За изпращане към счетоводството влезте в приложението и използвайте общия облачен архив.');return;}
+ try{
+  const {data:row,error:readError}=await sb.from('protocols').select('pno,created_by,accounting_status').eq('company_id',currentCompanyId).eq('pno',d.pno).maybeSingle();
+  if(readError||!row)throw new Error(readError?.message||'Протоколът не е намерен в общия облачен архив.');
+  if(currentUserRole!=='admin'&&row.created_by!==currentUser.id)throw new Error('Можете да изпращате към счетоводството само протоколи, създадени от вашия профил.');
+  if(row.accounting_status==='pending'){alert('Този протокол вече е изпратен към счетоводството.');return;}
+  if(row.accounting_status==='processed'){alert('Този протокол вече е обработен от счетоводството.');return;}
+  const {error}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',d.pno);
+  if(error)throw error;
+  alert('Протокол '+d.pno+' е изпратен в папка „Протоколи за фактуриране“.');
+ }catch(e){console.error('Accounting send failed:',e);alert('Не успях да изпратя протокола към счетоводството. '+(e?.message||''));}
+}
 function renderArchive(){
  const a=archiveData(),box=$('archiveList');
  const q=($('archiveSearch')?.value||'').trim().toLocaleLowerCase('bg'),date=$('archiveDateFilter')?.value||'';
@@ -1437,10 +1452,11 @@ function renderArchive(){
  });
  const locationOf=d=>String(d.site||d.settlement||d.locality||d.city||d.town||d.address||'').trim();
  const folderOf=d=>{
-  const place=locationOf(d).toLocaleLowerCase('bg');
-  if(place.includes('чепеларе')||place.includes('chepelare'))return 'Чепеларе';
-  if(place.includes('пампорово')||place.includes('pamporovo'))return 'Пампорово';
-  return 'Други / неуточнено';
+  const place=locationOf(d);
+  const normalized=place.toLocaleLowerCase('bg');
+  if(normalized.includes('чепеларе')||normalized.includes('chepelare'))return 'Чепеларе';
+  if(normalized.includes('пампорово')||normalized.includes('pamporovo'))return 'Пампорово';
+  return place||'Други / неуточнено';
  };
  const dateValue=d=>archiveDateISO(d.date||d.protocol_date||d.protocolDate)||'';
  const dateLabel=iso=>iso?iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4):(lang==='bg'?'Без дата':'No date');
@@ -1453,7 +1469,7 @@ function renderArchive(){
   items.forEach(row=>{const key=dateValue(row.d)||'без-дата';if(!byDate.has(key))byDate.set(key,[]);byDate.get(key).push(row);});
   const dateFolders=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
   const dateHtml=dateFolders.map(([day,dayRows])=>{
-   const cards=dayRows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
+   const cards=dayRows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" class="secondary" onclick="sendArchivedToAccounting(${i})">📤 ${lang==='bg'?'Изпрати към счетоводството':'Send to accounting'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
    return `<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">${esc(dateLabel(day==='без-дата'?'':day))} (${dayRows.length})</summary><div style="display:flex;justify-content:flex-end;padding:4px 0"><button type="button" class="secondary" onclick="exportArchiveDateZip('${esc(name)}','${esc(day)}')">📦 ${lang==='bg'?'Експорт ZIP':'Export ZIP'}</button></div><div style="padding-top:5px">${cards}</div></details>`;
   }).join('');
   const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
@@ -1606,7 +1622,7 @@ function renderInvoicingList(){
  });
  if(!rows.length){box.innerHTML='<p>Няма протоколи за избрания филтър.</p>';return;}
  rows.sort((a,b)=>dateValue(b).localeCompare(dateValue(a))||String(b.accounting_sent_at||'').localeCompare(String(a.accounting_sent_at||'')));
- const folderOrder=['Чепеларе','Пампорово','Други / неуточнено'];
+ const folderOrder=['Чепеларе','Пампорово',...Array.from(new Set(rows.map(x=>folderOf(x)))).filter(name=>!['Чепеларе','Пампорово'].includes(name)).sort((a,b)=>a.localeCompare(b,'bg'))];
  const grouped=new Map(folderOrder.map(name=>[name,[]]));
  rows.forEach(x=>grouped.get(folderOf(x)).push(x));
  box.innerHTML=folderOrder.map(name=>{
