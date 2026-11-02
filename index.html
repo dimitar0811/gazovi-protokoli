@@ -791,7 +791,7 @@ details.compact-details[open]>summary:before{content:"−"}
   </div>
   <div id="invoicingSummary" style="font-size:14px;margin:8px 0"></div>
   <div id="invoicingList"><p>Зареждане...</p></div>
-  <div class="actions"><button type="button" class="secondary" onclick="closeInvoicingList()">Затвори</button></div>
+  <div class="actions"><button id="invoicingCloseBtn" type="button" class="secondary" onclick="closeInvoicingList()">Затвори</button></div>
  </div>
 </div>
 
@@ -899,9 +899,15 @@ async function ensureCompany(){
   return true;
 }
 async function showHomeMenu(){
-  $('homeMenu').style.display='block';
   $('protocolMain').style.display='none';
   $('zoomControls').style.display='none';
+  if(currentUserRole==='accounting'){
+    $('homeMenu').style.display='none';
+    $('invoicingModal').style.display='flex';
+    return;
+  }
+  $('invoicingModal').style.display='none';
+  $('homeMenu').style.display='block';
 }
 function openProtocolSection(){
   $('homeMenu').style.display='none';
@@ -937,10 +943,20 @@ async function onSignedIn(user){
   currentUser=user;currentUserRole=access.role||'user';
   $('authGate').style.display='none';
   $('userBar').style.display='flex';
-  showHomeMenu();
   $('userEmail').textContent=user.email||'';
   $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
   $('invoicingListBtn').style.display=['admin','accounting'].includes(currentUserRole)?'inline-block':'none';
+  const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
+  if(shareButton)shareButton.style.display=currentUserRole==='accounting'?'none':'';
+  const invoiceClose=$('invoicingCloseBtn');
+  if(invoiceClose)invoiceClose.style.display=currentUserRole==='accounting'?'none':'';
+  if(currentUserRole==='accounting'){
+    $('homeMenu').style.display='none';
+    $('protocolMain').style.display='none';
+    $('zoomControls').style.display='none';
+  }else{
+    showHomeMenu();
+  }
   try{
     if(await ensureCompany()){
       await loadCloud();
@@ -951,6 +967,7 @@ async function onSignedIn(user){
     console.warn('Cloud setup unavailable; continuing locally',e);
     $('userEmail').textContent=(user.email||'')+' — локален режим';
   }
+  if(currentUserRole==='accounting')openInvoicingList();
 }
 let pendingAccessEmail='';
 function manageAccess(){
@@ -1651,7 +1668,7 @@ function openInvoicingList(){
  $('invoicingFilter').value='pending';
  loadInvoicingList();
 }
-function closeInvoicingList(){ $('invoicingModal').style.display='none'; }
+function closeInvoicingList(){ if(currentUserRole==='accounting')return; $('invoicingModal').style.display='none'; }
 async function loadInvoicingList(){
  if(!currentUser){$('invoicingList').innerHTML='<p>Първо влезте в приложението.</p>';return;}
  if(!['admin','accounting'].includes(currentUserRole)){$('invoicingList').innerHTML='<p>Нямате достъп до протоколите за фактуриране.</p>';return;}
