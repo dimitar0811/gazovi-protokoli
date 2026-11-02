@@ -791,7 +791,7 @@ details.compact-details[open]>summary:before{content:"−"}
   </div>
   <div id="invoicingSummary" style="font-size:14px;margin:8px 0"></div>
   <div id="invoicingList"><p>Зареждане...</p></div>
-  <div class="actions"><button id="invoicingCloseBtn" type="button" class="secondary" onclick="closeInvoicingList()">Затвори</button></div>
+  <div class="actions" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap"><button id="invoicingCloseBtn" type="button" class="secondary" onclick="closeInvoicingList()">Затвори</button><button id="accountingLogoutBtn" type="button" onclick="logout()">Изход</button></div>
  </div>
 </div>
 
@@ -950,6 +950,8 @@ async function onSignedIn(user){
   if(shareButton)shareButton.style.display=currentUserRole==='accounting'?'none':'';
   const invoiceClose=$('invoicingCloseBtn');
   if(invoiceClose)invoiceClose.style.display=currentUserRole==='accounting'?'none':'';
+  const accountingLogout=$('accountingLogoutBtn');
+  if(accountingLogout)accountingLogout.style.display=currentUserRole==='accounting'?'inline-block':'none';
   if(currentUserRole==='accounting'){
     $('homeMenu').style.display='none';
     $('protocolMain').style.display='none';
