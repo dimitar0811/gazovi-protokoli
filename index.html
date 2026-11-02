@@ -1427,6 +1427,32 @@ function saveSilently(){if(!$('client').value.trim()) return false;if(!$('pno').
 function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value='';renderArchive();$('archiveModal').style.display='flex'}
 function closeArchive(){$('archiveModal').style.display='none'}
 function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
+async function sendArchiveFolderToAccounting(folderName,day){
+ const all=archiveData();
+ const placeOf=d=>String(d.site||d.settlement||d.locality||d.city||d.town||d.address||'').trim();
+ const folderOf=d=>{const p=placeOf(d).toLocaleLowerCase('bg');if(p.includes('чепеларе')||p.includes('chepelare'))return 'Чепеларе';if(p.includes('пампорово')||p.includes('pamporovo'))return 'Пампорово';return placeOf(d)||'Други / неуточнено';};
+ const dateOf=d=>archiveDateISO(d.date||d.protocol_date||d.protocolDate)||'без-дата';
+ const selected=all.filter(d=>folderOf(d)===folderName&&dateOf(d)===day);
+ if(!selected.length){alert('В тази папка няма протоколи за изпращане.');return;}
+ if(!currentUser||!currentCompanyId){alert('За изпращане към счетоводството влезте в приложението и използвайте общия облачен архив.');return;}
+ if(!confirm('Да изпратя ли '+selected.length+' протокола от папка „'+folderName+'“ за дата '+(day==='без-дата'?'без дата':day)+' към счетоводството? Вече изпратените или обработените няма да се дублират.'))return;
+ let sent=0,skipped=0,failed=[];
+ for(const d of selected){
+  if(!d.pno){skipped++;continue;}
+  try{
+   const {data:row,error:readError}=await sb.from('protocols').select('pno,created_by,accounting_status').eq('company_id',currentCompanyId).eq('pno',d.pno).maybeSingle();
+   if(readError||!row)throw new Error(readError?.message||'не е намерен в облачния архив');
+   if(currentUserRole!=='admin'&&row.created_by!==currentUser.id)throw new Error('нямате право да изпратите този протокол');
+   if(row.accounting_status==='pending'||row.accounting_status==='processed'){skipped++;continue;}
+   const {error}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',d.pno);
+   if(error)throw error;
+   sent++;
+  }catch(e){failed.push((d.pno||'Без номер')+': '+(e?.message||'грешка'));console.error('Bulk accounting send failed:',d.pno,e);}
+ }
+ let message='Изпратени: '+sent+'. Пропуснати (вече изпратени/обработени или без номер): '+skipped+'.';
+ if(failed.length)message+=' Неуспешни: '+failed.length+' ('+failed.slice(0,5).join('; ')+').';
+ alert(message);
+}
 async function sendArchivedToAccounting(index){
  const d=archiveData()[index];
  if(!d?.pno){alert('Не е намерен протоколът в архива.');return;}
@@ -1470,7 +1496,7 @@ function renderArchive(){
   const dateFolders=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
   const dateHtml=dateFolders.map(([day,dayRows])=>{
    const cards=dayRows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" class="secondary" onclick="sendArchivedToAccounting(${i})">📤 ${lang==='bg'?'Изпрати към счетоводството':'Send to accounting'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
-   return `<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">${esc(dateLabel(day==='без-дата'?'':day))} (${dayRows.length})</summary><div style="display:flex;justify-content:flex-end;padding:4px 0"><button type="button" class="secondary" onclick="exportArchiveDateZip('${esc(name)}','${esc(day)}')">📦 ${lang==='bg'?'Експорт ZIP':'Export ZIP'}</button></div><div style="padding-top:5px">${cards}</div></details>`;
+   return `<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">${esc(dateLabel(day==='без-дата'?'':day))} (${dayRows.length})</summary><div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:4px 0"><button type="button" onclick="sendArchiveFolderToAccounting('${esc(name)}','${esc(day)}')">📤 ${lang==='bg'?'Изпрати папката към счетоводството':'Send folder to accounting'}</button><button type="button" class="secondary" onclick="exportArchiveDateZip('${esc(name)}','${esc(day)}')">📦 ${lang==='bg'?'Експорт ZIP':'Export ZIP'}</button></div><div style="padding-top:5px">${cards}</div></details>`;
   }).join('');
   const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
   return `<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${dateHtml||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>'}</div></details>`;
