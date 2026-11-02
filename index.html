@@ -671,8 +671,9 @@ details.compact-details[open]>summary:before{content:"−"}
   <div style="background:#fff;border:1px solid #cbd8e4;border-radius:16px;padding:26px 18px;text-align:center;box-shadow:0 5px 18px #123b6014">
     <h2 style="margin:0 0 8px;color:#123b60;font-size:25px">ГАЗОВИ ПРОТОКОЛИ</h2>
     <p style="margin:0 0 22px;color:#607080">Изберете раздел</p>
-    <button type="button" onclick="openProtocolSection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">1. Протоколи за изразходване на газ</button>
-    <button type="button" onclick="openDailySection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">2. Дневни протоколи</button>
+    <button id="homeProtocolBtn" type="button" onclick="openProtocolSection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">1. Протоколи за изразходване на газ</button>
+    <button id="homeDailyBtn" type="button" onclick="openDailySection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">2. Дневни протоколи</button>
+    <button id="homeInvoicingBtn" type="button" onclick="openInvoicingSection()" style="display:none;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">3. Протоколи за фактуриране</button>
   </div>
 </div>
 <div id="userBar" class="user-bar" style="display:none">
@@ -901,13 +902,12 @@ async function ensureCompany(){
 async function showHomeMenu(){
   $('protocolMain').style.display='none';
   $('zoomControls').style.display='none';
-  if(currentUserRole==='accounting'){
-    $('homeMenu').style.display='none';
-    $('invoicingModal').style.display='flex';
-    return;
-  }
   $('invoicingModal').style.display='none';
   $('homeMenu').style.display='block';
+}
+function openInvoicingSection(){
+  if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате достъп до протоколите за фактуриране.');return;}
+  openInvoicingList();
 }
 function openProtocolSection(){
   $('homeMenu').style.display='none';
@@ -945,7 +945,10 @@ async function onSignedIn(user){
   $('userBar').style.display='flex';
   $('userEmail').textContent=user.email||'';
   $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
-  $('invoicingListBtn').style.display=['admin','accounting'].includes(currentUserRole)?'inline-block':'none';
+  $('invoicingListBtn').style.display='none';
+  $('homeInvoicingBtn').style.display=['admin','accounting'].includes(currentUserRole)?'block':'none';
+  $('homeProtocolBtn').style.display=currentUserRole==='accounting'?'none':'block';
+  $('homeDailyBtn').style.display=currentUserRole==='accounting'?'none':'block';
   const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
   if(shareButton)shareButton.style.display=currentUserRole==='accounting'?'none':'';
   const invoiceClose=$('invoicingCloseBtn');
@@ -954,13 +957,7 @@ async function onSignedIn(user){
   if(accountingLogout)accountingLogout.style.display=currentUserRole==='accounting'?'inline-block':'none';
   const accountingLogoutTop=$('accountingLogoutTopBtn');
   if(accountingLogoutTop)accountingLogoutTop.style.display=currentUserRole==='accounting'?'inline-block':'none';
-  if(currentUserRole==='accounting'){
-    $('homeMenu').style.display='none';
-    $('protocolMain').style.display='none';
-    $('zoomControls').style.display='none';
-  }else{
-    showHomeMenu();
-  }
+  showHomeMenu();
   try{
     if(await ensureCompany()){
       await loadCloud();
