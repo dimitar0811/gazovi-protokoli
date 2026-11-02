@@ -909,7 +909,7 @@ function openProtocolSection(){
   $('zoomControls').style.display='flex';
 }
 function openDailySection(){location.href='gas-daily.html?v=20261022fix5';}
-function onSignedIn(user){
+async function onSignedIn(user){
   if(!user?.email_confirmed_at){
     await sb.auth.signOut();
     currentUser=null;currentUserRole='user';
