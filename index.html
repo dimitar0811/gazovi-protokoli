@@ -1403,15 +1403,21 @@ function renderArchive(){
   return 'Други / неуточнено';
  };
  const dateValue=d=>archiveDateISO(d.date||d.protocol_date||d.protocolDate)||'';
+ const dateLabel=iso=>iso?iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4):(lang==='bg'?'Без дата':'No date');
  rows.sort((a,b)=>dateValue(b.d).localeCompare(dateValue(a.d))||((b.d.savedAt||0)-(a.d.savedAt||0)));
  const folderOrder=['Чепеларе','Пампорово','Други / неуточнено'];
  const grouped=new Map(folderOrder.map(name=>[name,[]]));
  rows.forEach(row=>grouped.get(folderOf(row.d)).push(row));
  box.innerHTML=folderOrder.map(name=>{
-  const items=grouped.get(name);
-  const cards=items.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
+  const items=grouped.get(name),byDate=new Map();
+  items.forEach(row=>{const key=dateValue(row.d)||'без-дата';if(!byDate.has(key))byDate.set(key,[]);byDate.get(key).push(row);});
+  const dateFolders=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+  const dateHtml=dateFolders.map(([day,dayRows])=>{
+   const cards=dayRows.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
+   return `<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">${esc(dateLabel(day==='без-дата'?'':day))} (${dayRows.length})</summary><div style="padding-top:5px">${cards}</div></details>`;
+  }).join('');
   const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
-  return `<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${cards||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>'}</div></details>`;
+  return `<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${dateHtml||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>'}</div></details>`;
  }).join('');
  if(!rows.length&&a.length)box.insertAdjacentHTML('afterbegin','<p>Няма протоколи, отговарящи на търсенето.</p>');
 }
