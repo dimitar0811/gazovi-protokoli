@@ -1388,15 +1388,13 @@ function openArchive(){$('archiveSearch').value='';$('archiveDateFilter').value=
 function closeArchive(){$('archiveModal').style.display='none'}
 function archiveDateISO(v){const s=String(v??'').trim();if(!s)return '';let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=s.match(/(?:^|\D)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:\D|$)/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''}
 function renderArchive(){
- let a=archiveData(),box=$('archiveList');
- if(!a.length){box.innerHTML='<p>'+(lang==='bg'?'Все още няма записани протоколи.':'No saved protocols yet.')+'</p>';return}
+ const a=archiveData(),box=$('archiveList');
  const q=($('archiveSearch')?.value||'').trim().toLocaleLowerCase('bg'),date=$('archiveDateFilter')?.value||'';
  const rows=a.map((d,i)=>({d,i})).filter(({d})=>{
   const text=[d.pno,d.date,d.client,d.site,d.settlement,d.locality,d.city,d.town,d.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));
   const protocolDate=archiveDateISO(d.date||d.protocol_date||d.protocolDate);
   return text&&(!date||protocolDate===date);
  });
- if(!rows.length){box.innerHTML='<p>Няма протоколи, отговарящи на търсенето.</p>';return}
  const locationOf=d=>String(d.site||d.settlement||d.locality||d.city||d.town||d.address||'').trim();
  const folderOf=d=>{
   const place=locationOf(d).toLocaleLowerCase('bg');
@@ -1405,15 +1403,17 @@ function renderArchive(){
   return 'Други / неуточнено';
  };
  const dateValue=d=>archiveDateISO(d.date||d.protocol_date||d.protocolDate)||'';
- rows.sort((a,b)=>(dateValue(b.d).localeCompare(dateValue(a.d)))||((b.d.savedAt||0)-(a.d.savedAt||0)));
+ rows.sort((a,b)=>dateValue(b.d).localeCompare(dateValue(a.d))||((b.d.savedAt||0)-(a.d.savedAt||0)));
  const folderOrder=['Чепеларе','Пампорово','Други / неуточнено'];
  const grouped=new Map(folderOrder.map(name=>[name,[]]));
  rows.forEach(row=>grouped.get(folderOf(row.d)).push(row));
- box.innerHTML=folderOrder.filter(name=>grouped.get(name).length).map(name=>{
+ box.innerHTML=folderOrder.map(name=>{
   const items=grouped.get(name);
-  const cards=items.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small><br><small>Създал: ${esc(d.createdByEmail||d.created_by_email||'—')} | Последно редактирал: ${esc(d.updatedByEmail||d.updated_by_email||'—')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
-  return `<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${cards}</div></details>`;
+  const cards=items.map(({d,i})=>`<div class="archive-item"><div class="archive-meta"><b>${esc(d.pno||'')}</b><br>${esc(d.date||'')} — ${esc(d.client||'')}<br><small>${esc(locationOf(d)||'')}</small></div><div class="archive-actions"><button onclick="openArchived(${i})">${lang==='bg'?'Отвори':'Open'}</button><button class="secondary" onclick="downloadArchivedPdf(${i})">${lang==='bg'?'Изтегли PDF':'Download PDF'}</button><button type="button" style="background:#b42318" onclick="deleteArchived(${i})">${lang==='bg'?'Изтрий':'Delete'}</button></div></div>`).join('');
+  const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
+  return `<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">${esc(name)} (${items.length})</summary><div style="padding-top:6px">${cards||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>'}</div></details>`;
  }).join('');
+ if(!rows.length&&a.length)box.insertAdjacentHTML('afterbegin','<p>Няма протоколи, отговарящи на търсенето.</p>');
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function openArchived(i){let a=archiveData(),d=a[i];if(!d)return;ids.forEach(id=>$(id).value=d[id]||'');$('techSig').innerHTML=d.techSig||'';$('clientSig').innerHTML=d.clientSig||'';$('techName').value=d.techName||'';$('clientName').value=d.clientName||'';renderCustomReadings(d.customReadings||[]);applyProtocolType(d.protocolType||protocolTypeFromNumber(d.pno));closeArchive();calc();window.scrollTo({top:0,behavior:'smooth'});alert(lang==='bg'?'Протоколът е зареден от архива. Записът му ще се обнови при натискане на „Запиши“.':'Protocol loaded from archive. Save to update it.')}
