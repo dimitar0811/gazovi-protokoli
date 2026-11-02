@@ -103,7 +103,7 @@ test('new protocol carries over the same client and previous readings', async ({
   await page.getByRole('button', { name: 'Нов протокол' }).click();
   await expect(page.locator('#client')).toHaveValue('Постоянен клиент');
   await expect(page.locator('#c1')).toHaveValue('45.125');
-  await expect(page.locator('#m1')).toHaveValue('91.500');
+  await expect(page.locator('#m1').first()).toHaveValue('91.500');
 });
 
 test('language switch changes interface language and keeps field values editable', async ({ page }) => {
