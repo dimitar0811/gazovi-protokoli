@@ -904,7 +904,7 @@ async function showHomeMenu(){
   $('protocolMain').style.display='none';
   $('zoomControls').style.display='none';
   $('invoicingModal').style.display='none';
-  $('homeProtocolBtn').style.display=isAccountingRole()?'none':'block';
+  $('homeProtocolBtn').style.display='block';
   $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
   $('homeInvoicingBtn').style.display=(isAccountingRole()||currentUserRole==='admin')?'block':'none';
   $('homeMenu').style.display='block';
@@ -914,13 +914,12 @@ function openInvoicingSection(){
   openInvoicingList();
 }
 function openProtocolSection(){
-  if(isAccountingRole()){alert('Счетоводният профил има достъп само до протоколите за фактуриране.');showHomeMenu();return;}
   $('homeMenu').style.display='none';
   $('protocolMain').style.display='block';
   $('zoomControls').style.display='flex';
 }
 function openDailySection(){
-  if(isAccountingRole()){alert('Счетоводният профил има достъп само до протоколите за фактуриране.');showHomeMenu();return;}
+  if(isAccountingRole()){alert('Нямате достъп до дневните протоколи.');showHomeMenu();return;}
   location.href='gas-daily.html?v=20261022fix5';
 }
 async function onSignedIn(user){
