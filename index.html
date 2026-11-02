@@ -1552,7 +1552,7 @@ function renderInvoicingList(){
  const pending=invoicingRows.filter(x=>x.accounting_status==='pending').length;
  const processed=invoicingRows.filter(x=>x.accounting_status==='processed').length;
  $('invoicingSummary').textContent='Общо: '+invoicingRows.length+' | Чакат: '+pending+' | Обработени: '+processed;
- const locationOf=d=>String(d.settlement||d.locality||d.city||d.town||d.site||d.address||'').trim();
+ const locationOf=d=>String(d.site||d.settlement||d.locality||d.city||d.town||d.address||'').trim();
  const folderOf=d=>{
   const place=locationOf(d).toLocaleLowerCase('bg');
   if(place.includes('чепеларе')||place.includes('chepelare'))return 'Чепеларе';
