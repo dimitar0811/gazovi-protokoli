@@ -1435,21 +1435,33 @@ async function sendArchiveFolderToAccounting(folderName,day){
  const selected=all.filter(d=>folderOf(d)===folderName&&dateOf(d)===day);
  if(!selected.length){alert('В тази папка няма протоколи за изпращане.');return;}
  if(!currentUser||!currentCompanyId){alert('За изпращане към счетоводството влезте в приложението и използвайте общия облачен архив.');return;}
- if(!confirm('Да изпратя ли '+selected.length+' протокола от папка „'+folderName+'“ за дата '+(day==='без-дата'?'без дата':day)+' към счетоводството? Вече изпратените или обработените няма да се дублират.'))return;
- let sent=0,skipped=0,failed=[];
+ if(!confirm('Да изпратя ли '+selected.length+' протокола от папка „'+folderName+'“ за дата '+(day==='без-дата'?'без дата':day)+' към счетоводството?'))return;
+ let sent=0,skipped=0,failed=[],prepared=[];
  for(const d of selected){
   if(!d.pno){skipped++;continue;}
   try{
    const {data:row,error:readError}=await sb.from('protocols').select('pno,created_by,accounting_status').eq('company_id',currentCompanyId).eq('pno',d.pno).maybeSingle();
    if(readError||!row)throw new Error(readError?.message||'не е намерен в облачния архив');
-   if(currentUserRole!=='admin'&&row.created_by!==currentUser.id)throw new Error('нямате право да изпратите този протокол');
-   if(row.accounting_status==='pending'||row.accounting_status==='processed'){skipped++;continue;}
-   const {error}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',d.pno);
+   if(!['admin','accounting'].includes(currentUserRole)&&row.created_by!==currentUser.id)throw new Error('нямате право да изпратите този протокол');
+   prepared.push({d,row});
+  }catch(e){failed.push((d.pno||'Без номер')+': '+(e?.message||'грешка'));console.error('Bulk accounting precheck failed:',d.pno,e);}
+ }
+ const already=prepared.filter(x=>x.row.accounting_status==='pending'||x.row.accounting_status==='processed');
+ let resendMarked=false;
+ if(already.length){
+  resendMarked=confirm('Намерени са '+already.length+' протокола, които все още са маркирани като изпратени или обработени в облачната база.\n\nАко изберете OK, те ще бъдат изпратени отново; обработените ще се върнат в статус „Чака фактуриране“.\n\nДа изпратя ли повторно всички '+prepared.length+' протокола?');
+ }
+ for(const {d,row} of prepared){
+  const marked=row.accounting_status==='pending'||row.accounting_status==='processed';
+  if(marked&&!resendMarked){skipped++;continue;}
+  try{
+   const {data:updated,error}=await sb.from('protocols').update({accounting_status:'pending',accounting_sent_at:new Date().toISOString(),accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',d.pno).select('pno,accounting_status').maybeSingle();
    if(error)throw error;
+   if(!updated||updated.accounting_status!=='pending')throw new Error('базата не потвърди промяната на статуса');
    sent++;
   }catch(e){failed.push((d.pno||'Без номер')+': '+(e?.message||'грешка'));console.error('Bulk accounting send failed:',d.pno,e);}
  }
- let message='Изпратени: '+sent+'. Пропуснати (вече изпратени/обработени или без номер): '+skipped+'.';
+ let message='Изпратени: '+sent+'. Пропуснати: '+skipped+'.';
  if(failed.length)message+=' Неуспешни: '+failed.length+' ('+failed.slice(0,5).join('; ')+').';
  alert(message);
 }
@@ -1696,8 +1708,9 @@ async function removeFromInvoicing(pno){
  if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате право да премахвате протоколи от фактуриране.');return;}
  const row=invoicingRows.find(x=>x.pno===pno);if(!row)return;
  if(!confirm('Да премахна ли протокол '+pno+' от списъка за фактуриране? Оригиналният протокол в архива няма да бъде изтрит.'))return;
- const {error}=await sb.from('protocols').update({accounting_status:null,accounting_sent_at:null,accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',pno);
+ const {data:updated,error}=await sb.from('protocols').update({accounting_status:null,accounting_sent_at:null,accounting_processed_at:null}).eq('company_id',currentCompanyId).eq('pno',pno).select('pno,accounting_status').maybeSingle();
  if(error){alert('Не успях да премахна протокола от фактуриране: '+error.message);return;}
+ if(!updated||updated.accounting_status!==null){alert('Протоколът не е премахнат от облачната база. Записът остава в списъка. Проверете правата за промяна в Supabase.');return;}
  invoicingRows=invoicingRows.filter(x=>x.pno!==pno);
  renderInvoicingList();
  alert('Протокол '+pno+' е премахнат от списъка за фактуриране. Оригиналът остава в архива.');
