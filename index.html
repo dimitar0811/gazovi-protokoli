@@ -775,6 +775,7 @@ details.compact-details[open]>summary:before{content:"−"}
   <h3 id="invoicingTitle">Протоколи за фактуриране</h3>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
    <input id="invoicingSearch" type="search" placeholder="Търси клиент, обект, адрес" oninput="renderInvoicingList()" style="flex:1;min-width:180px;font-size:16px;padding:10px">
+   <input id="invoicingDateFilter" type="date" aria-label="Филтър по дата" title="Филтър по дата" onchange="renderInvoicingList()" style="width:auto;min-width:150px;font-size:16px;padding:10px;border:1px solid #bac8d5;border-radius:6px">
    <select id="invoicingFilter" onchange="renderInvoicingList()" style="padding:10px;border:1px solid #bac8d5;border-radius:6px;font-size:14px">
     <option value="pending">Чакат фактуриране</option><option value="processed">Обработени</option><option value="all">Всички</option>
    </select>
@@ -1546,17 +1547,44 @@ async function loadInvoicingList(){
 function renderInvoicingList(){
  const box=$('invoicingList');if(!box)return;
  const q=($('invoicingSearch')?.value||'').trim().toLocaleLowerCase('bg');
+ const dateFilter=$('invoicingDateFilter')?.value||'';
  const filter=$('invoicingFilter')?.value||'pending';
  const pending=invoicingRows.filter(x=>x.accounting_status==='pending').length;
  const processed=invoicingRows.filter(x=>x.accounting_status==='processed').length;
  $('invoicingSummary').textContent='Общо: '+invoicingRows.length+' | Чакат: '+pending+' | Обработени: '+processed;
- const rows=invoicingRows.filter(x=>(filter==='all'||x.accounting_status===filter)&&[x.pno,x.date,x.client,x.site,x.settlement,x.locality,x.city,x.town,x.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q)));
+ const locationOf=d=>String(d.settlement||d.locality||d.city||d.town||d.site||d.address||'').trim();
+ const folderOf=d=>{
+  const place=locationOf(d).toLocaleLowerCase('bg');
+  if(place.includes('чепеларе')||place.includes('chepelare'))return 'Чепеларе';
+  if(place.includes('пампорово')||place.includes('pamporovo'))return 'Пампорово';
+  return 'Други / неуточнено';
+ };
+ const dateValue=d=>archiveDateISO(d.date||d.protocol_date||d.protocolDate)||'';
+ const dateLabel=iso=>iso?iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4):(lang==='bg'?'Без дата':'No date');
+ const rows=invoicingRows.filter(x=>{
+  const matchesText=[x.pno,x.date,x.client,x.site,x.settlement,x.locality,x.city,x.town,x.address].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));
+  return (filter==='all'||x.accounting_status===filter)&&matchesText&&(!dateFilter||dateValue(x)===dateFilter);
+ });
  if(!rows.length){box.innerHTML='<p>Няма протоколи за избрания филтър.</p>';return;}
- box.innerHTML=rows.map(x=>{
-  const done=x.accounting_status==='processed';
-  const sent=x.accounting_sent_at?new Date(x.accounting_sent_at).toLocaleDateString('bg-BG'):'—';
-  const locality=x.settlement||x.locality||x.city||x.town||x.site||x.address||'—';
-  return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(locality)+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
+ rows.sort((a,b)=>dateValue(b).localeCompare(dateValue(a))||String(b.accounting_sent_at||'').localeCompare(String(a.accounting_sent_at||'')));
+ const folderOrder=['Чепеларе','Пампорово','Други / неуточнено'];
+ const grouped=new Map(folderOrder.map(name=>[name,[]]));
+ rows.forEach(x=>grouped.get(folderOf(x)).push(x));
+ box.innerHTML=folderOrder.map(name=>{
+  const items=grouped.get(name),byDate=new Map();
+  items.forEach(x=>{const key=dateValue(x)||'без-дата';if(!byDate.has(key))byDate.set(key,[]);byDate.get(key).push(x);});
+  const dateFolders=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+  const dateHtml=dateFolders.map(([day,dayRows])=>{
+   const cards=dayRows.map(x=>{
+    const done=x.accounting_status==='processed';
+    const sent=x.accounting_sent_at?new Date(x.accounting_sent_at).toLocaleDateString('bg-BG'):'—';
+    const locality=locationOf(x)||'—';
+    return '<div class="archive-item"><div class="archive-meta"><b>'+esc(x.pno||'Без номер')+'</b><br>'+esc(x.date||'—')+' — <b>'+esc(x.client||'Без клиент')+'</b><br><small>Населено място: '+esc(locality)+'</small><br><small>Изпратен за фактуриране: '+esc(sent)+'</small><br><small>Статус: <b>'+(done?'Обработен':'Чака фактуриране')+'</b></small></div><div class="archive-actions"><button type="button" data-action="open" data-pno="'+esc(x.pno||'')+'">Отвори</button><button type="button" class="secondary" data-action="toggle" data-pno="'+esc(x.pno||'')+'">'+(done?'Върни в чакащи':'Отбележи обработен')+'</button></div></div>';
+   }).join('');
+   return '<details class="archive-date-folder" open style="margin:7px 0;padding:8px;background:#fff;border:1px solid #d7e0e8;border-radius:7px"><summary style="cursor:pointer;font-weight:600;padding:5px">'+esc(dateLabel(day==='без-дата'?'':day))+' ('+dayRows.length+')</summary><div style="padding-top:5px">'+cards+'</div></details>';
+  }).join('');
+  const empty=lang==='bg'?'Няма протоколи в тази папка.':'No protocols in this folder.';
+  return '<details class="archive-folder" open style="margin:10px 0;padding:10px;background:#f7f9fb;border:1px solid #cbd5df;border-radius:8px"><summary style="cursor:pointer;font-weight:700;padding:5px">'+esc(name)+' ('+items.length+')</summary><div style="padding-top:6px">'+(dateHtml||'<p style="margin:8px 4px;color:#667085">'+empty+'</p>')+'</div></details>';
  }).join('');
  box.onclick=async e=>{
   const b=e.target.closest('button[data-action]');if(!b)return;
