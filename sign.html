@@ -1,23 +1,708 @@
 <!doctype html>
-<html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Подписване на газов протокол</title>
+<html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"><title>Протокол за газови измервания</title>
+<style type="text/css">:root, :host {
+  --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+  --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+  --fa-font-light: normal 300 1em/1 "Font Awesome 6 Pro";
+  --fa-font-thin: normal 100 1em/1 "Font Awesome 6 Pro";
+  --fa-font-duotone: normal 900 1em/1 "Font Awesome 6 Duotone";
+  --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+  --fa-font-sharp-solid: normal 900 1em/1 "Font Awesome 6 Sharp";
+  --fa-font-sharp-regular: normal 400 1em/1 "Font Awesome 6 Sharp";
+  --fa-font-sharp-light: normal 300 1em/1 "Font Awesome 6 Sharp";
+  --fa-font-sharp-thin: normal 100 1em/1 "Font Awesome 6 Sharp";
+  --fa-font-sharp-duotone-solid: normal 900 1em/1 "Font Awesome 6 Sharp Duotone";
+}
+
+svg:not(:root).svg-inline--fa, svg:not(:host).svg-inline--fa {
+  overflow: visible;
+  box-sizing: content-box;
+}
+
+.svg-inline--fa {
+  display: var(--fa-display, inline-block);
+  height: 1em;
+  overflow: visible;
+  vertical-align: -0.125em;
+}
+.svg-inline--fa.fa-2xs {
+  vertical-align: 0.1em;
+}
+.svg-inline--fa.fa-xs {
+  vertical-align: 0em;
+}
+.svg-inline--fa.fa-sm {
+  vertical-align: -0.0714285705em;
+}
+.svg-inline--fa.fa-lg {
+  vertical-align: -0.2em;
+}
+.svg-inline--fa.fa-xl {
+  vertical-align: -0.25em;
+}
+.svg-inline--fa.fa-2xl {
+  vertical-align: -0.3125em;
+}
+.svg-inline--fa.fa-pull-left {
+  margin-right: var(--fa-pull-margin, 0.3em);
+  width: auto;
+}
+.svg-inline--fa.fa-pull-right {
+  margin-left: var(--fa-pull-margin, 0.3em);
+  width: auto;
+}
+.svg-inline--fa.fa-li {
+  width: var(--fa-li-width, 2em);
+  top: 0.25em;
+}
+.svg-inline--fa.fa-fw {
+  width: var(--fa-fw-width, 1.25em);
+}
+
+.fa-layers svg.svg-inline--fa {
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.fa-layers-counter, .fa-layers-text {
+  display: inline-block;
+  position: absolute;
+  text-align: center;
+}
+
+.fa-layers {
+  display: inline-block;
+  height: 1em;
+  position: relative;
+  text-align: center;
+  vertical-align: -0.125em;
+  width: 1em;
+}
+.fa-layers svg.svg-inline--fa {
+  transform-origin: center center;
+}
+
+.fa-layers-text {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+}
+
+.fa-layers-counter {
+  background-color: var(--fa-counter-background-color, #ff253a);
+  border-radius: var(--fa-counter-border-radius, 1em);
+  box-sizing: border-box;
+  color: var(--fa-inverse, #fff);
+  line-height: var(--fa-counter-line-height, 1);
+  max-width: var(--fa-counter-max-width, 5em);
+  min-width: var(--fa-counter-min-width, 1.5em);
+  overflow: hidden;
+  padding: var(--fa-counter-padding, 0.25em 0.5em);
+  right: var(--fa-right, 0);
+  text-overflow: ellipsis;
+  top: var(--fa-top, 0);
+  transform: scale(var(--fa-counter-scale, 0.25));
+  transform-origin: top right;
+}
+
+.fa-layers-bottom-right {
+  bottom: var(--fa-bottom, 0);
+  right: var(--fa-right, 0);
+  top: auto;
+  transform: scale(var(--fa-layers-scale, 0.25));
+  transform-origin: bottom right;
+}
+
+.fa-layers-bottom-left {
+  bottom: var(--fa-bottom, 0);
+  left: var(--fa-left, 0);
+  right: auto;
+  top: auto;
+  transform: scale(var(--fa-layers-scale, 0.25));
+  transform-origin: bottom left;
+}
+
+.fa-layers-top-right {
+  top: var(--fa-top, 0);
+  right: var(--fa-right, 0);
+  transform: scale(var(--fa-layers-scale, 0.25));
+  transform-origin: top right;
+}
+
+.fa-layers-top-left {
+  left: var(--fa-left, 0);
+  right: auto;
+  top: var(--fa-top, 0);
+  transform: scale(var(--fa-layers-scale, 0.25));
+  transform-origin: top left;
+}
+
+.fa-1x {
+  font-size: 1em;
+}
+
+.fa-2x {
+  font-size: 2em;
+}
+
+.fa-3x {
+  font-size: 3em;
+}
+
+.fa-4x {
+  font-size: 4em;
+}
+
+.fa-5x {
+  font-size: 5em;
+}
+
+.fa-6x {
+  font-size: 6em;
+}
+
+.fa-7x {
+  font-size: 7em;
+}
+
+.fa-8x {
+  font-size: 8em;
+}
+
+.fa-9x {
+  font-size: 9em;
+}
+
+.fa-10x {
+  font-size: 10em;
+}
+
+.fa-2xs {
+  font-size: 0.625em;
+  line-height: 0.1em;
+  vertical-align: 0.225em;
+}
+
+.fa-xs {
+  font-size: 0.75em;
+  line-height: 0.0833333337em;
+  vertical-align: 0.125em;
+}
+
+.fa-sm {
+  font-size: 0.875em;
+  line-height: 0.0714285718em;
+  vertical-align: 0.0535714295em;
+}
+
+.fa-lg {
+  font-size: 1.25em;
+  line-height: 0.05em;
+  vertical-align: -0.075em;
+}
+
+.fa-xl {
+  font-size: 1.5em;
+  line-height: 0.0416666682em;
+  vertical-align: -0.125em;
+}
+
+.fa-2xl {
+  font-size: 2em;
+  line-height: 0.03125em;
+  vertical-align: -0.1875em;
+}
+
+.fa-fw {
+  text-align: center;
+  width: 1.25em;
+}
+
+.fa-ul {
+  list-style-type: none;
+  margin-left: var(--fa-li-margin, 2.5em);
+  padding-left: 0;
+}
+.fa-ul > li {
+  position: relative;
+}
+
+.fa-li {
+  left: calc(-1 * var(--fa-li-width, 2em));
+  position: absolute;
+  text-align: center;
+  width: var(--fa-li-width, 2em);
+  line-height: inherit;
+}
+
+.fa-border {
+  border-color: var(--fa-border-color, #eee);
+  border-radius: var(--fa-border-radius, 0.1em);
+  border-style: var(--fa-border-style, solid);
+  border-width: var(--fa-border-width, 0.08em);
+  padding: var(--fa-border-padding, 0.2em 0.25em 0.15em);
+}
+
+.fa-pull-left {
+  float: left;
+  margin-right: var(--fa-pull-margin, 0.3em);
+}
+
+.fa-pull-right {
+  float: right;
+  margin-left: var(--fa-pull-margin, 0.3em);
+}
+
+.fa-beat {
+  animation-name: fa-beat;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, ease-in-out);
+}
+
+.fa-bounce {
+  animation-name: fa-bounce;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, cubic-bezier(0.28, 0.84, 0.42, 1));
+}
+
+.fa-fade {
+  animation-name: fa-fade;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, cubic-bezier(0.4, 0, 0.6, 1));
+}
+
+.fa-beat-fade {
+  animation-name: fa-beat-fade;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, cubic-bezier(0.4, 0, 0.6, 1));
+}
+
+.fa-flip {
+  animation-name: fa-flip;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, ease-in-out);
+}
+
+.fa-shake {
+  animation-name: fa-shake;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, linear);
+}
+
+.fa-spin {
+  animation-name: fa-spin;
+  animation-delay: var(--fa-animation-delay, 0s);
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 2s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, linear);
+}
+
+.fa-spin-reverse {
+  --fa-animation-direction: reverse;
+}
+
+.fa-pulse,
+.fa-spin-pulse {
+  animation-name: fa-spin;
+  animation-direction: var(--fa-animation-direction, normal);
+  animation-duration: var(--fa-animation-duration, 1s);
+  animation-iteration-count: var(--fa-animation-iteration-count, infinite);
+  animation-timing-function: var(--fa-animation-timing, steps(8));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fa-beat,
+.fa-bounce,
+.fa-fade,
+.fa-beat-fade,
+.fa-flip,
+.fa-pulse,
+.fa-shake,
+.fa-spin,
+.fa-spin-pulse {
+    animation-delay: -1ms;
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+    transition-delay: 0s;
+    transition-duration: 0s;
+  }
+}
+@keyframes fa-beat {
+  0%, 90% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(var(--fa-beat-scale, 1.25));
+  }
+}
+@keyframes fa-bounce {
+  0% {
+    transform: scale(1, 1) translateY(0);
+  }
+  10% {
+    transform: scale(var(--fa-bounce-start-scale-x, 1.1), var(--fa-bounce-start-scale-y, 0.9)) translateY(0);
+  }
+  30% {
+    transform: scale(var(--fa-bounce-jump-scale-x, 0.9), var(--fa-bounce-jump-scale-y, 1.1)) translateY(var(--fa-bounce-height, -0.5em));
+  }
+  50% {
+    transform: scale(var(--fa-bounce-land-scale-x, 1.05), var(--fa-bounce-land-scale-y, 0.95)) translateY(0);
+  }
+  57% {
+    transform: scale(1, 1) translateY(var(--fa-bounce-rebound, -0.125em));
+  }
+  64% {
+    transform: scale(1, 1) translateY(0);
+  }
+  100% {
+    transform: scale(1, 1) translateY(0);
+  }
+}
+@keyframes fa-fade {
+  50% {
+    opacity: var(--fa-fade-opacity, 0.4);
+  }
+}
+@keyframes fa-beat-fade {
+  0%, 100% {
+    opacity: var(--fa-beat-fade-opacity, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(var(--fa-beat-fade-scale, 1.125));
+  }
+}
+@keyframes fa-flip {
+  50% {
+    transform: rotate3d(var(--fa-flip-x, 0), var(--fa-flip-y, 1), var(--fa-flip-z, 0), var(--fa-flip-angle, -180deg));
+  }
+}
+@keyframes fa-shake {
+  0% {
+    transform: rotate(-15deg);
+  }
+  4% {
+    transform: rotate(15deg);
+  }
+  8%, 24% {
+    transform: rotate(-18deg);
+  }
+  12%, 28% {
+    transform: rotate(18deg);
+  }
+  16% {
+    transform: rotate(-22deg);
+  }
+  20% {
+    transform: rotate(22deg);
+  }
+  32% {
+    transform: rotate(-12deg);
+  }
+  36% {
+    transform: rotate(12deg);
+  }
+  40%, 100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.fa-rotate-90 {
+  transform: rotate(90deg);
+}
+
+.fa-rotate-180 {
+  transform: rotate(180deg);
+}
+
+.fa-rotate-270 {
+  transform: rotate(270deg);
+}
+
+.fa-flip-horizontal {
+  transform: scale(-1, 1);
+}
+
+.fa-flip-vertical {
+  transform: scale(1, -1);
+}
+
+.fa-flip-both,
+.fa-flip-horizontal.fa-flip-vertical {
+  transform: scale(-1, -1);
+}
+
+.fa-rotate-by {
+  transform: rotate(var(--fa-rotate-angle, 0));
+}
+
+.fa-stack {
+  display: inline-block;
+  vertical-align: middle;
+  height: 2em;
+  position: relative;
+  width: 2.5em;
+}
+
+.fa-stack-1x,
+.fa-stack-2x {
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: var(--fa-stack-z-index, auto);
+}
+
+.svg-inline--fa.fa-stack-1x {
+  height: 1em;
+  width: 1.25em;
+}
+.svg-inline--fa.fa-stack-2x {
+  height: 2em;
+  width: 2.5em;
+}
+
+.fa-inverse {
+  color: var(--fa-inverse, #fff);
+}
+
+.sr-only,
+.fa-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:not(:focus),
+.fa-sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.svg-inline--fa .fa-primary {
+  fill: var(--fa-primary-color, currentColor);
+  opacity: var(--fa-primary-opacity, 1);
+}
+
+.svg-inline--fa .fa-secondary {
+  fill: var(--fa-secondary-color, currentColor);
+  opacity: var(--fa-secondary-opacity, 0.4);
+}
+
+.svg-inline--fa.fa-swap-opacity .fa-primary {
+  opacity: var(--fa-secondary-opacity, 0.4);
+}
+
+.svg-inline--fa.fa-swap-opacity .fa-secondary {
+  opacity: var(--fa-primary-opacity, 1);
+}
+
+.svg-inline--fa mask .fa-primary,
+.svg-inline--fa mask .fa-secondary {
+  fill: black;
+}
+
+.fad.fa-inverse,
+.fa-duotone.fa-inverse {
+  color: var(--fa-inverse, #fff);
+}
+#pdfViewerModal{display:none;position:fixed;inset:0;z-index:10050;background:#eef2f6;flex-direction:column;color:#152536}
+#pdfViewerModal .pdf-toolbar{display:flex;align-items:center;gap:8px;padding:10px;background:#123b60;color:#fff;flex-wrap:wrap}
+#pdfViewerModal .pdf-toolbar button{padding:8px 12px;border:0;border-radius:7px;font-size:15px}
+#pdfViewerModal .pdf-status{font-size:13px}
+#pdfViewerModal .pdf-viewport{flex:1;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom;padding:12px}
+#pdfViewerModal .pdf-pages{transform-origin:top left;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:100%}
+#pdfViewerModal canvas{display:block;background:#fff;max-width:none;box-shadow:0 2px 9px #0003}
+#pdfViewerModal .pdf-loading{padding:24px;text-align:center}
+@media print{#pdfViewerModal{display:none!important}}
+
+</style>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#1c2733;font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:900px;margin:20px auto;padding:12px}.sheet{background:#fff;padding:24px;border-radius:12px;box-shadow:0 3px 18px #142a4018}h1{font-size:24px;text-align:center;margin:0 0 6px;color:#183d5c}#subtitle{text-align:center;color:#536779;margin:0 0 20px}.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:20px}.field{border:1px solid #d5dee7;border-radius:8px;padding:10px;overflow-wrap:anywhere}.field b{display:block;font-size:12px;color:#5a6b7b;text-transform:uppercase;margin-bottom:3px}.section{border:1px solid #cbd6e1;border-radius:9px;margin:14px 0;overflow:hidden}.section h2{font-size:16px;background:#f1f5f8;margin:0;padding:10px 12px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;padding:10px}.value{padding:7px 9px;background:#fafbfd;border-radius:6px;overflow-wrap:anywhere}.value b{display:block;font-size:12px;color:#5a6b7b}.notes{white-space:pre-wrap;padding:12px;overflow-wrap:anywhere}.signatures{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.sig{border:1px solid #d5dee7;border-radius:8px;padding:12px;min-height:100px}.sig img{display:block;max-width:100%;max-height:90px;object-fit:contain;margin-top:8px}#status{padding:14px;background:#fff;border-radius:10px;margin-bottom:12px;white-space:pre-wrap}.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0}button{background:#183d5c;color:#fff;border:0;border-radius:8px;padding:11px 16px;font:inherit;cursor:pointer;font-weight:600}button.secondary{background:#e4ebf1;color:#183d5c}button:disabled{opacity:.55}#signPanel{background:#fff;border-radius:10px;padding:18px;margin:14px 0;box-shadow:0 3px 18px #142a4018}label{display:block;font-weight:600;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid #bac7d4;border-radius:8px;font:inherit}canvas{width:100%;height:150px;border:2px dashed #8b9daf;border-radius:8px;background:#fff;touch-action:none;display:block}small{color:#526171}@media print{body{background:white}.sheet{box-shadow:none;padding:0;border-radius:0}main{margin:0;padding:0;max-width:none}#status,#signPanel,#actions{display:none!important}.section,.field,.sig{break-inside:avoid}h1{font-size:20px}}
+*{box-sizing:border-box}body{margin:0;background:#eef3f7;color:#172536;font-family:Arial,sans-serif}
+header{background:#123b60;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;margin:0}.lang button{padding:6px 9px;border:0;border-radius:6px;background:#dce8f2;color:#123b60;font-weight:bold}
+main{max-width:1050px;margin:10px auto;padding:0 10px}.sheet{background:#fff;border:1px solid #ccd7e1;border-radius:10px;padding:12px}
+.title{text-align:center;border-bottom:2px solid #123b60;padding-bottom:7px;margin-bottom:8px}.title h2{font-size:17px;margin:0}.title small{color:#647689}
+.section{border:1px solid #d3dde6;border-radius:7px;padding:7px;margin:7px 0}.section h3{font-size:12px;margin:0 0 6px;color:#123b60}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.span2{grid-column:span 2}.span3{grid-column:span 3}.span4{grid-column:span 4}.span6{grid-column:span 6}
+label{display:block;font-size:10px;font-weight:bold;color:#506273;margin-bottom:2px}input,textarea{width:100%;padding:6px;border:1px solid #bac8d5;border-radius:5px;font:inherit;font-size:12px}textarea{height:42px;resize:none}
+.calc{background:#e9f6ef;border-radius:5px;padding:7px;font-size:11px}.calc b{font-size:15px;color:#12683a}
+.footer{display:grid;grid-template-columns:1fr 1fr;gap:8px}.signature{border:1px dashed #aab8c5;border-radius:5px;min-height:65px;padding:5px;font-size:10px}.signature img{max-width:100%;height:48px;display:block}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}button{border:0;border-radius:6px;padding:8px 11px;background:#1769aa;color:#fff;font-weight:bold;cursor:pointer;font-size:12px}.secondary{background:#dce7f1;color:#17324d}
+#sigModal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:12px}.modal{background:#fff;border-radius:10px;padding:12px;width:min(500px,100%)}canvas{width:100%;height:190px;border:1px solid #bbc8d4;border-radius:6px;touch-action:none;background:white}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.span2,.span3,.span4,.span6{grid-column:span 2}}
+@media print{body{background:#fff}.no-print,header{display:none!important}main{margin:0;padding:0;max-width:none}.sheet{border:0;padding:4px}.section{margin:4px 0;padding:5px}.title{padding-bottom:4px}.footer{page-break-inside:avoid}@page{size:A4 portrait;margin:7mm}}
+.archive-modal{max-width:900px;max-height:85vh;overflow:auto}.archive-item{border:1px solid #ccc;border-radius:8px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.archive-meta{flex:1}.archive-actions{display:flex;gap:6px;flex-wrap:wrap}@media(max-width:600px){.archive-item{display:block}.archive-actions{margin-top:8px}}
+#archiveModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;align-items:center;justify-content:center;padding:15px}
+
+.auth-gate{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.auth-card{background:#fff;width:min(420px,100%);border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center}
+.auth-card h2{margin:0 0 6px}.auth-card p{margin:0 0 18px;color:#555}.auth-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:13px;border:1px solid #bbb;border-radius:8px;font-size:16px}.auth-card button{width:100%;margin-top:8px;padding:12px;border-radius:8px;font-size:16px}.auth-card #authMsg{min-height:24px;margin-top:12px;font-size:14px}.user-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:8px 12px;background:#f2f2f2;font-size:13px}.user-bar button{width:auto;margin:0;padding:6px 12px}
+#customReadingsList{display:grid;gap:8px}.custom-reading-card{border:1px solid #cbd8e4;border-radius:8px;padding:9px;background:#f8fafc}.custom-reading-top{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:7px}.custom-reading-top strong{color:#123b60}.custom-reading-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.custom-reading-fields>div{min-width:0}.custom-reading-difference{background:#e9f6ef;border-radius:5px;padding:8px;font-size:12px;align-self:end}.custom-reading-difference b{display:block;color:#12683a;font-size:15px;margin-top:3px}.custom-reading-card input{min-width:0}.custom-reading-remove{background:#b42318!important;color:#fff!important;padding:7px 9px!important}@media(max-width:600px){.custom-reading-fields{grid-template-columns:1fr 1fr}.custom-reading-difference{grid-column:1/-1}}@media print{.custom-reading-card{padding:4px!important}.custom-reading-fields{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important}.custom-reading-top{margin-bottom:3px!important}}
+</style>
+<style>.date-wrap{display:flex;align-items:center;gap:4px;position:relative}.date-wrap input[type=text]{flex:1;min-width:0}.date-btn{padding:6px 8px;min-width:38px;min-height:34px;cursor:pointer;background:#1769aa;color:#fff;border-radius:6px;flex-shrink:0}.date-native{position:absolute;right:0;top:0;width:44px;height:100%;opacity:0;pointer-events:auto;z-index:3;cursor:pointer;touch-action:manipulation}</style>
+<style>input,textarea,button{font-family:Arial,sans-serif}input:focus,textarea:focus{outline:2px solid #1769aa}</style>
+<style id="a4-one-page-print">
+@page{size:A4 portrait;margin:8mm}
+@media print{
+ html,body{width:100%!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important}
+ body{zoom:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:12px!important}
+ #zoomControls{display:none!important} header,.no-print,.user-bar,#archiveModal,#authGate{display:none!important}
+ main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+ #sheet,.sheet{zoom:var(--print-scale,1)!important;width:calc(100% / var(--print-scale,1))!important;max-width:none!important;margin:0!important;padding:4px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+ .section{margin:5px 0!important;padding:6px!important;break-inside:auto!important;page-break-inside:auto!important}
+ .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;row-gap:8px!important}
+ .grid>.span2,.grid>.span3,.grid>.span4{grid-column:span 1!important;min-width:0!important}
+ .grid>.span6{grid-column:1/-1!important;min-width:0!important}
+ h1,h2,h3,p{margin-top:6px!important;margin-bottom:6px!important;line-height:1.3!important}
+ h3{font-size:16px!important}
+ label{margin-bottom:3px!important;font-size:13px!important;line-height:1.25!important}
+ input,textarea,select{width:100%!important;min-width:0!important;padding:6px!important;min-height:26px!important;height:auto!important;font-size:14px!important;line-height:1.3!important;color:#111!important;background:#fff!important;border:1px solid #555!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none!important}
+ input[type="date"],input[type="text"],input[type="number"]{display:inline-block!important;visibility:visible!important;opacity:1!important}
+ textarea{min-height:32px!important;max-height:none!important;overflow:visible!important;white-space:pre-wrap!important}
+ details.compact-details:not([open])>.compact-fields{display:block!important}
+ details.compact-details>summary{display:none!important}
+ button{display:none!important}
+ .footer,.signatures,.signature{break-inside:avoid!important;page-break-inside:avoid!important}
+ *{box-sizing:border-box!important}
+}
+</style>
+<style id="compact-work-mode">
+details.compact-details{border:1px solid #d7dee8;border-radius:8px;padding:8px;margin:6px 0;background:#f8fafc}
+details.compact-details>summary{cursor:pointer;font-weight:700;color:#174a75;list-style:none;display:flex;align-items:center;gap:8px}
+details.compact-details>summary::-webkit-details-marker{display:none}
+details.compact-details>summary:before{content:"＋";font-size:16px}
+details.compact-details[open]>summary:before{content:"−"}
+.compact-fields{padding-top:8px}
+.reading-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.reading-grid>div{min-width:0}
+.reading-grid input{width:100%;box-sizing:border-box}
+@media(max-width:600px){input,textarea,select{font-size:16px!important;line-height:1.3!important;min-height:40px;padding:8px!important}.reading-grid{gap:6px}.reading-grid label{font-size:13px}.reading-grid input{font-size:16px;padding:10px}}
+@media print{
+ details.compact-details:not([open])>.compact-fields{display:block!important}
+ details.compact-details>summary{display:none!important}
+ details.compact-details{border:0!important;padding:0!important;margin:2px 0!important;background:transparent!important}
+ .reading-grid{gap:3px!important}
+}
+/* Keep native touch handling so Android keyboard gestures and long-press menus work normally. */
+</style>
+<style>
+body{background:#eef3f7!important}main{max-width:1050px;margin:10px auto;padding:0 10px}
+#status{background:#fff;padding:12px;border-radius:8px;margin:0 0 10px}
+#sheet input,#sheet textarea{pointer-events:none;background:#fff!important;color:#172536!important;opacity:1!important}
+#sheet button.no-print,#sheet .no-print{display:none!important}
+#sheet .date-native{display:none!important}
+#signPanel{background:#fff;border:1px solid #ccd7e1;border-radius:10px;padding:14px;margin:12px 0}
+#signPanel input{width:100%;padding:10px;border:1px solid #bac8d5;border-radius:5px;font-size:16px}
+#signature{width:100%;height:150px;border:1px dashed #aab8c5;border-radius:6px;touch-action:none;background:#fff;display:block}
+#signPanel button,#actions button{border:0;border-radius:6px;padding:10px 14px;background:#1769aa;color:#fff;font-weight:bold;font-size:14px}
+#actions{display:flex;justify-content:center;gap:8px;margin:12px 0}
+@media print{body{background:#fff!important}#status,#signPanel,#actions{display:none!important}main{margin:0;padding:0;max-width:none}#sheet{border:0!important;border-radius:0!important;padding:4px!important}#sheet .no-print{display:none!important}@page{size:A4 portrait;margin:7mm}}
 </style></head><body><main>
 <div id="status">Зареждане на протокола…</div>
-<article id="sheet" class="sheet" hidden><h1>Газов протокол</h1><p id="subtitle">Протокол за газови измервания — копие за клиента</p><div id="meta" class="meta"></div>
-<div class="section"><h2>Данни за клиента и обекта</h2><div id="client" class="grid"></div></div>
-<div class="section"><h2>Коректор</h2><div id="corrector" class="grid"></div></div>
-<div class="section"><h2>Разходомер</h2><div id="meter" class="grid"></div></div>
-<div class="section"><h2>Допълнителна информация</h2><div id="extra" class="grid"></div><div id="notes" class="notes"></div></div>
-<div class="signatures"><div class="sig"><b>Председател на доставчика</b><div id="techName"></div><div id="techSig"></div></div><div class="sig"><b>Клиент / представител</b><div id="clientNameView"></div><div id="clientSig"></div></div></div></article>
-<section id="signPanel" hidden><h2>Подпис на клиента</h2><label for="clientName">Име и фамилия</label><input id="clientName" autocomplete="name" maxlength="120" placeholder="Въведете името си"><label for="signature">Подпис с пръст или мишка</label><canvas id="signature" width="1200" height="380"></canvas><div class="actions"><button class="secondary" id="clearBtn" type="button">Изчисти подписа</button><button id="submitBtn" type="button">Потвърди подписа</button></div></section>
-<div class="actions" id="actions" hidden><button id="printBtn" type="button">Принтирай / Запази като PDF</button></div></main>
+<div class="sheet" id="sheet">
+<div class="title"><h2 data-bg="ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ" data-en="GAS MEASUREMENT PROTOCOL">ПРОТОКОЛ ЗА ГАЗОВИ ИЗМЕРВАНИЯ</h2><small>№ <input id="pno" style="width:105px;display:inline-block"> &nbsp; <span data-bg="Дата" data-en="Date">Дата</span> <span class="date-wrap"><input id="date" type="text" inputmode="text" placeholder="ДД.ММ.ГГГГ" maxlength="10" style="width:130px;display:inline-block" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('date')">📅</button><input id="datePicker" type="date" class="date-native" aria-label="Избор на дата" tabindex="-1"></span></small></div>
+
+<div class="section"><h3 data-bg="Клиент и обект" data-en="CLIENT AND SITE">Клиент и обект</h3><div class="grid">
+<div class="span2"><label data-bg="Клиент / фирма" data-en="Client / Company">Клиент / фирма</label><input id="client"></div>
+<div class="span2"><label data-bg="ЕИК / Булстат" data-en="Company ID">ЕИК / Булстат</label><input id="eik"></div>
+<div class="span2"><label data-bg="Представител на клиента" data-en="Client representative">Представител на клиента</label><input id="tech"></div>
+<div class="span4"><label data-bg="Обект / адрес" data-en="Site / Address">Обект / адрес</label><input id="site"></div>
+<div class="span2"><label data-bg="Телефон / имейл" data-en="Phone / Email">Телефон / имейл</label><input id="contact"></div>
+</div></div>
+
+<div class="section"><h3 data-bg="Коректор" data-en="CORRECTOR">Коректор</h3><div class="grid">
+<div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="cbm"></div>
+<div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="cs"></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="cd" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cd')">📅</button><input id="cdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label id="c1Label" data-bg="Начално показание на коректора m³" data-en="Corrector start reading m³">Начално показание на коректора m³</label><input id="c1" type="number" step="any"></div>
+<div class="span2" id="c2Field"><label id="c2Label" data-bg="Крайно показание на коректора m³" data-en="Corrector end reading m³">Крайно показание на коректора m³</label><input id="c2" type="number" step="any"></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="cv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('cv')">📅</button><input id="cvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+</div><div class="calc" id="cCalc"><span data-bg="Количество за фактуриране по коректора" data-en="Billable quantity according to corrector">Количество за фактуриране по коректора</span>: <b id="cu">10.000 m³</b></div></div>
+
+<div class="section"><h3 data-bg="Разходомер" data-en="GAS METER">Разходомер</h3><div class="grid">
+<div class="span2"><label data-bg="Марка / модел" data-en="Brand / Model">Марка / модел</label><input id="mbm"></div>
+<div class="span2"><label data-bg="Сериен номер" data-en="Serial number">Сериен номер</label><input id="ms"></div>
+<div class="span2"><label data-bg="Дата" data-en="Commissioning date">Дата</label><span class="date-wrap"><input id="md" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('md')">📅</button><input id="mdPicker" type="date" class="date-native" tabindex="-1"></span></div>
+<div class="span2"><label id="m1Label" data-bg="Начално показание m³" data-en="Start reading m³">Начално показание m³</label><input id="m1" type="number" step="any"></div>
+<div class="span2" id="m2Field"><label id="m2Label" data-bg="Крайно показание m³" data-en="End reading m³">Крайно показание m³</label><input id="m2" type="number" step="any"></div>
+<div class="span2"><label data-bg="Заверен за използване до" data-en="Certified for use until">Заверен за използване до</label><span class="date-wrap"><input id="mv" type="text" placeholder="ДД.ММ.ГГГГ" inputmode="text" maxlength="10" autocomplete="off"><button type="button" class="date-btn no-print" aria-label="Избери дата" onclick="pickDate('mv')">📅</button><input id="mvPicker" type="date" class="date-native" tabindex="-1"></span></div>
+</div><div class="calc" id="mCalc"><span data-bg="Разход по разходомера" data-en="Consumption according to meter">Разход по разходомера</span>: <b id="mu">2.000 m³</b></div></div>
+
+<div class="section" id="customReadingsSection"><h3 data-bg="Допълнителни показания" data-en="ADDITIONAL READINGS">Допълнителни показания</h3><div id="customReadingsList"></div><button type="button" class="secondary no-print" onclick="addCustomReading()" data-bg="＋ Добави графа" data-en="＋ Add reading">＋ Добави графа</button></div>
+<div class="section"><h3 data-bg="Забележки / заключение" data-en="NOTES / CONCLUSION">Забележки / заключение</h3><textarea id="notes"></textarea></div>
+
+<div class="footer">
+<div class="signature"><b data-bg="Представител на доставчика" data-en="Supplier representative">Представител на доставчика</b><label data-bg="Име:" data-en="Name:">Име:</label><input id="techName" placeholder="" data-ph-bg="" data-ph-en=""><label data-bg="Подпис:" data-en="Signature:">Подпис:</label><div id="techSig"></div><button type="button" class="secondary no-print" onclick="openSig('techSig')">Добави подпис</button></div>
+<div class="signature"><b data-bg="Клиент / представител" data-en="Client / representative">Клиент / представител</b><label data-bg="Име:" data-en="Name:">Име:</label><input id="clientName" placeholder="" data-ph-bg="" data-ph-en=""><label data-bg="Подпис:" data-en="Signature:">Подпис:</label><div id="clientSig"></div><button type="button" class="secondary no-print" onclick="openSig('clientSig')">Добави подпис</button></div>
+</div>
+</div>
+<section id="signPanel" hidden><h3>Подпис на клиента</h3><label for="clientNameInput">Име:</label><input id="clientNameInput" maxlength="120" autocomplete="name"><label for="signature">Подпис с пръст или мишка:</label><canvas id="signature" width="1200" height="380"></canvas><div class="actions"><button type="button" id="clearBtn">Изчисти подписа</button><button type="button" id="submitBtn">Потвърди подписа</button></div></section>
+<div id="actions" hidden><button type="button" id="printBtn">Принтирай / Запази като PDF</button></div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
-const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl'),$=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');let signed=false,loaded=false,drawing=false,ink=false;
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function field(l,v){return '<div class="field"><b>'+esc(l)+'</b>'+esc(v??'—')+'</div>'}function value(l,v){return '<div class="value"><b>'+esc(l)+'</b>'+esc(v??'—')+'</div>'}function status(t,ok=false){$('status').textContent=t;$('status').style.background=ok?'#e7f6ec':'#fff'}
-function showSig(id,v){const m=String(v||'').match(/data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+/);if(m){const im=document.createElement('img');im.src=m[0];im.alt='Подпис';$(id).replaceChildren(im)}}
-function render(d){const p=d?.protocol||{};$('meta').innerHTML=field('Номер на протокола',p.pno)+field('Дата',p.date)+field('Клиент',p.client)+field('ЕИК',p.eik);$('client').innerHTML=value('Клиент / фирма',p.client)+value('ЕИК',p.eik)+value('Обект',p.site)+value('Адрес / контакт',p.contact)+value('Председател на доставчика',p.tech_name||p.tech);$('corrector').innerHTML=value('Модел',p.cbm)+value('Сериен номер',p.cs)+value('Дата на проверка',p.cd)+value('Начално показание',p.c1)+value('Крайно показание',p.c2)+value('Количество',p.cv);$('meter').innerHTML=value('Модел',p.mbm)+value('Сериен номер',p.ms)+value('Дата на проверка',p.md)+value('Начално показание',p.m1)+value('Крайно показание',p.m2)+value('Количество',p.mv);$('extra').innerHTML=value('Номер',p.pno)+value('Дата',p.date);$('notes').textContent=p.notes?'Забележки: '+p.notes:'Няма допълнителни забележки.';$('techName').textContent=p.tech_name||p.tech||'—';$('clientNameView').textContent=d.client_name||p.client_name||'—';showSig('techSig',p.tech_sig);showSig('clientSig',d.client_signature||p.client_sig);$('sheet').hidden=false;$('actions').hidden=false}
-async function init(){if(!token){status('Липсва защитеният линк. Отворете пълния линк, изпратен от приложението.');return}try{const {data,error}=await sb.rpc('get_protocol_for_signing',{p_token:token});if(error)throw error;signed=!!data.signed;loaded=true;render(data);if(signed){$('signPanel').hidden=true;status('Протоколът вече е подписан. Можете да го принтирате или да го запазите като PDF.',true)}else{$('signPanel').hidden=false;status('Проверете протокола и подпишете, ако данните са правилни.',true)}}catch(e){console.error(e);status(e.message||'Не успяхме да заредим протокола. Проверете линка и опитайте отново.')}}
-const c=$('signature'),ctx=c.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#152536';function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}c.addEventListener('pointerdown',e=>{if(!loaded||signed)return;drawing=true;ink=true;c.setPointerCapture(e.pointerId);const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()});c.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});function stop(){drawing=false}c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
-$('clearBtn').onclick=()=>{ctx.clearRect(0,0,c.width,c.height);ink=false};$('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('clientName').value.trim();if(name.length<2){status('Моля, въведете името си.');return}if(!ink){status('Моля, поставете подпис в полето.');return}$('submitBtn').disabled=true;status('Записване на подписа…');try{const sig=c.toDataURL('image/png'),{error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:sig});if(error)throw error;signed=true;$('clientNameView').textContent=name;showSig('clientSig',sig);$('signPanel').hidden=true;status('Подписът е записан успешно. Можете да принтирате или да запазите целия протокол като PDF.',true)}catch(e){console.error(e);status(e.message||'Не успяхме да запишем подписа. Опитайте отново.');$('submitBtn').disabled=false}};$('printBtn').onclick=()=>window.print();init();
+const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl');
+const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
+const ids=['pno','date','client','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes','techName','clientName'];
+let signed=false,loaded=false,drawing=false,ink=false;
+function status(msg,ok=false){$('status').textContent=msg;$('status').style.background=ok?'#e9f6ef':'#fff'}
+function decodeNotes(raw){const t=String(raw??''),m=t.match(/(?:\r?\n)?<!--GAS_CUSTOM_READINGS:([\s\S]*?)-->\s*$/);if(!m)return{notes:t,customReadings:[]};try{return{notes:t.slice(0,m.index).replace(/\s+$/,''),customReadings:JSON.parse(decodeURIComponent(m[1]))}}catch(e){return{notes:t,customReadings:[]}}}
+function fillValue(id,value){const el=$(id);if(!el)return;el.value=value??'';el.setAttribute('value',value??'')}
+function setSig(id,raw){const el=$(id);if(!el)return;el.innerHTML='';if(!raw)return;let src='';const t=String(raw),m=t.match(/data:image\/(?:png|jpeg|jpg);base64,[A-Za-z0-9+/=]+/);if(m)src=m[0];else{const u=t.match(/src=["'](https:\/\/[^"']+)["']/i);if(u)src=u[1]}if(src){const im=document.createElement('img');im.src=src;im.alt='Подпис';el.append(im)}}
+function renderCustomReadings(rows){const host=$('customReadingsList');if(!host)return;host.innerHTML='';(Array.isArray(rows)?rows:[]).forEach((r,i)=>{const card=document.createElement('div');card.className='custom-reading-card';const top=document.createElement('div');top.className='custom-reading-top';top.textContent='Графа '+(i+1);const fields=document.createElement('div');fields.className='custom-reading-fields';[['Име на клиента',r.client],['Име на графата',r.name],['Начална стойност',r.start],['Крайна стойност',r.end]].forEach(([label,val])=>{const w=document.createElement('div'),l=document.createElement('label'),v=document.createElement('div');l.textContent=label;v.textContent=val??'';w.append(l,v);fields.append(w)});const diff=document.createElement('div');diff.className='custom-reading-difference';const n=Number(r.end)-Number(r.start);diff.innerHTML='<span>Разлика</span><b>'+(r.start!==''&&r.end!==''&&Number.isFinite(n)?n.toLocaleString('bg-BG',{maximumFractionDigits:6}):'—')+'</b>';card.append(top,fields,diff);host.append(card)})}
+function render(data){const p=data?.protocol||{},decoded=decodeNotes(p.notes);ids.forEach(id=>fillValue(id,p[id]??''));$('cu').textContent=(Number(p.c2||0)-Number(p.c1||0)).toFixed(3)+' m³';$('mu').textContent=(Number(p.m2||0)-Number(p.m1||0)).toFixed(3)+' m³';if(p.protocolType&&p.protocolType!=='measurement'){const t=p.protocolType,verb=t==='removal'?'демонтаж':'монтаж';const title=$('sheet').querySelector('.title h2');if(title)title.textContent='ПРОТОКОЛ ЗА '+verb.toUpperCase()+' НА РАЗХОДОМЕР И КОРЕКТОР';$('c1Label').textContent='Показание при '+verb+' на коректора m³';$('m1Label').textContent='Показание при '+verb+' на разходомера m³';['c2Field','m2Field','cCalc','mCalc','customReadingsSection'].forEach(id=>{if($(id))$(id).style.display='none'})}
+$('notes').value=decoded.notes;$('techName').value=p.tech_name||p.techName||'';$('clientName').value=data.client_name||p.client_name||'';setSig('techSig',p.tech_sig);setSig('clientSig',data.client_signature||p.client_sig);renderCustomReadings(decoded.customReadings);$('sheet').hidden=false;$('actions').hidden=false}
+async function init(){if(!token){status('Липсва защитеният линк.');return}try{const {data,error}=await sb.rpc('get_protocol_for_signing',{p_token:token});if(error)throw error;signed=!!data.signed;loaded=true;render(data);if(signed){$('signPanel').hidden=true;status('Протоколът вече е подписан. Можете да го запазите или принтирате.',true)}else{$('signPanel').hidden=false;status('Прегледайте оригиналния протокол. Ако всички данни са правилни, поставете подпис.',true)}}catch(e){console.error(e);status(e.message||'Не успяхме да заредим протокола.')}}
+const canvas=$('signature'),ctx=canvas.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#152536';function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
+canvas.addEventListener('pointerdown',e=>{if(!loaded||signed)return;drawing=true;ink=true;canvas.setPointerCapture(e.pointerId);const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()});canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});canvas.addEventListener('pointerup',()=>drawing=false);canvas.addEventListener('pointercancel',()=>drawing=false);
+$('clearBtn').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ink=false};
+$('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('clientNameInput').value.trim();if(name.length<2){status('Моля, въведете името си.');return}if(!ink){status('Моля, поставете подписа си.');return}$('submitBtn').disabled=true;status('Записване на подписа…');try{const sig=canvas.toDataURL('image/png'),{error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:sig});if(error)throw error;signed=true;$('clientName').value=name;setSig('clientSig',sig);$('signPanel').hidden=true;status('Подписът е записан. Можете да запазите или принтирате протокола.',true)}catch(e){console.error(e);status(e.message||'Грешка при запис на подписа.');$('submitBtn').disabled=false}};
+$('printBtn').onclick=()=>window.print();init();
 </script></body></html>
