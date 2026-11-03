@@ -734,7 +734,7 @@ async function saveProtocolPdf(){
   pdf.addImage(canvas.toDataURL('image/jpeg',0.96),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
   const number=($('pno')?.value||'').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'-');
   pdf.save('Protokol'+(number?'-'+number:'')+'.pdf');
-  status('PDF файлът е създаден. Проверете папка „Изтегляния“ на телефона.',true);
+  status('PDF файлът е създаден успешно и е изпратен за изтегляне.',true);window.alert('PDF файлът е създаден успешно! Можете да го намерите в папка „Изтегляния“ на телефона.');
  }catch(e){console.error(e);status(e.message||'Грешка при създаване на PDF файла.')}
  finally{if(clone?.parentNode)clone.parentNode.removeChild(clone);btn.disabled=false;btn.textContent=oldText}
 }
