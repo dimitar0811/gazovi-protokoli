@@ -1,77 +1,23 @@
 <!doctype html>
-<html lang="bg">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Подписване на газов протокол</title>
+<html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Подписване на газов протокол</title>
 <style>
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:#1b2733;font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:760px;margin:24px auto;padding:18px}.card{background:white;border-radius:16px;padding:22px;box-shadow:0 4px 22px #102a4320;margin-bottom:16px}
-h1{font-size:23px;margin:0 0 8px;color:#123b60}h2{font-size:18px;margin:0 0 12px}p{margin:8px 0}
-.consumption-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.consumption{background:#eaf5ee;border:1px solid #c7e5d0;border-radius:12px;padding:14px}.consumption b{display:block;color:#315b3d;font-size:13px}.consumption strong{display:block;font-size:22px;color:#176536;margin-top:4px}
-@media(max-width:520px){.consumption-grid{grid-template-columns:1fr}}
-@page{size:A4;margin:14mm}@media print{body{background:#fff!important}main{max-width:none;margin:0;padding:0}.card{box-shadow:none!important;border:0!important;padding:0!important;margin:0 0 12px!important}body>main>section:first-child,#signCard,#documentActions{display:none!important}#protocolCard{display:block!important}#protocolCard[hidden]{display:block!important}.field,.consumption{break-inside:avoid}}
-.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.field{background:#f5f8fb;border-radius:10px;padding:12px;overflow-wrap:anywhere}.field b{display:block;color:#526171;font-size:12px;text-transform:uppercase;margin-bottom:3px}
-label{display:block;font-weight:600;margin:14px 0 6px}input{width:100%;padding:12px;border:1px solid #bac7d4;border-radius:9px;font:inherit}canvas{width:100%;height:190px;border:2px dashed #8b9daf;border-radius:10px;background:#fff;touch-action:none;display:block}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:9px;padding:12px 16px;font:inherit;font-weight:650;background:#123b60;color:white;cursor:pointer}button.secondary{background:#e6edf3;color:#123b60}button:disabled{opacity:.55}#status{white-space:pre-wrap;padding:12px;border-radius:9px;background:#eef3f7;margin-top:12px}small{color:#526171}
-</style>
-</head>
-<body><main>
-<section class="card"><h1>Подписване на газов протокол</h1><p>Проверете данните по протокола. Ако са правилни, въведете името си и подпишете с пръст в полето по-долу.</p><div id="status">Зареждане на протокола…</div></section>
-<section class="card" id="protocolCard" hidden><h2>Данни на протокола</h2><div class="info" id="protocolInfo"></div><div class="consumption-grid" id="consumptionInfo"></div><p id="notes"></p></section>
-<section class="card" id="signCard" hidden><h2>Вашият подпис</h2><label for="clientName">Име и фамилия</label><input id="clientName" autocomplete="name" maxlength="120" placeholder="Въведете името си"><label for="signature">Подпис с пръст или мишка</label><canvas id="signature" width="1200" height="380" aria-label="Поле за подпис"></canvas><div class="actions"><button class="secondary" id="clearBtn" type="button">Изчисти подписа</button><button id="submitBtn" type="button">Потвърди подписа</button></div><small>След потвърждение подписът се свързва с този протокол.</small></section>
-<section class="card" id="documentActions" hidden><h2>Копие на протокола</h2><p>След подписването можете да запазите протокола като PDF или да го принтирате.</p><div class="actions"><button id="savePdfBtn" type="button">Запази PDF</button><button class="secondary" id="printBtn" type="button">Принтирай</button></div></section>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
-const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
-let signed=false,loaded=false,drawing=false,ink=false;
-window.protocolForPdf=null;
-function status(msg,ok=false){$('status').textContent=msg;$('status').style.background=ok?'#e7f6ec':'#eef3f7';$('status').style.color=ok?'#176536':'#263746'}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function addField(label,value){return '<div class="field"><b>'+esc(label)+'</b>'+esc(value||'—')+'</div>'}
-function reading(v){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(String(v).replace(/\\s/g,'').replace(',','.'));return Number.isFinite(n)?n:null}
-function usage(value,start,end){if(value!==null&&value!==undefined&&String(value).trim()!=='')return String(value);const a=reading(start),b=reading(end);return a===null||b===null?'—':(b-a).toFixed(3)}
-async function saveProtocolPdf(){const card=$('protocolCard');if(card.hidden)return;const btn=$('savePdfBtn');btn.disabled=true;try{if(!window.html2pdf){await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}const clone=card.cloneNode(true);clone.hidden=false;clone.style.display='block';clone.style.width='180mm';clone.style.boxShadow='none';const wrap=document.createElement('div');wrap.style.width='180mm';wrap.appendChild(clone);const no=(window.protocolForPdf?.pno||'protokol').toString().replace(/[^a-z0-9а-яА-Я_-]/gi,'-');await html2pdf().set({margin:10,filename:'gazov-protokol-'+no+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,backgroundColor:'#fff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(wrap).save()}catch(e){console.error(e);status('Неуспешно създаване на PDF. Опитайте отново.')}finally{btn.disabled=false}}
-async function init(){
- if(!token){status('Липсва токенът за подписване. Отворете пълния линк, получен от изпращача.');return}
- try{
-  const {data,error}=await sb.rpc('get_protocol_for_signing',{p_token:token});
-  if(error)throw error;
-  const p=data.protocol||{},isSigned=!!data.signed;signed=isSigned;loaded=true;window.protocolForPdf=p;
-  $('protocolInfo').innerHTML=
-   addField('Номер',p.pno)+addField('Дата',p.date)+addField('Клиент / фирма',p.client)+addField('ЕИК',p.eik)+
-   addField('Председател на доставчика',p.tech_name||p.tech)+addField('Обект',p.site)+addField('Адрес / контакт',p.contact)+
-   addField('Коректор — начално',p.c1)+addField('Коректор — крайно',p.c2)+addField('Коректор — начално',p.c1)+addField('Коректор — крайно',p.c2)+
-   addField('Разходомер — начално',p.m1)+addField('Разходомер — крайно',p.m2);
-  $('consumptionInfo').innerHTML='<div class="consumption"><b>Изразходван газ по коректора</b><strong>'+esc(usage(p.cv,p.c1,p.c2))+' m³</strong></div><div class="consumption"><b>Изразходван газ по разходомера</b><strong>'+esc(usage(p.mv,p.m1,p.m2))+' m³</strong></div>';
-  $('notes').textContent=p.notes?'Забележки: '+p.notes:'';
-  $('protocolCard').hidden=false;
-  $('documentActions').hidden=false;
-  if(isSigned){$('signCard').hidden=true;status('Този протокол вече е подписан. Можете да го запазите като PDF или да го принтирате.',true);return}
-  $('signCard').hidden=false;status('Проверете данните и подпишете, ако всичко е правилно.',true);
- }catch(e){console.error(e);status(e.message||'Не успяхме да заредим протокола. Проверете линка и опитайте отново.')}
-}
-const c=$('signature'),ctx=c.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#152536';
-function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}
-c.addEventListener('pointerdown',e=>{if(!loaded||signed)return;drawing=true;ink=true;c.setPointerCapture(e.pointerId);const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()});
-c.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});
-function stop(){drawing=false}c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
-$('clearBtn').onclick=()=>{ctx.clearRect(0,0,c.width,c.height);ink=false};
-$('submitBtn').onclick=async()=>{
- if(!loaded||signed)return;
- const name=$('clientName').value.trim();
- if(name.length<2){status('Моля, въведете името си.');$('clientName').focus();return}
- if(!ink){status('Моля, поставете подпис в полето.');return}
- $('submitBtn').disabled=true;status('Записване на подписа…');
- try{
-  const {data,error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:c.toDataURL('image/png')});
-  if(error)throw error;
-  signed=true;$('signCard').hidden=true;status('Подписът е записан успешно. Можете да затворите тази страница.',true);
- }catch(e){console.error(e);status(e.message||'Не успяхме да запишем подписа. Опитайте отново.');$('submitBtn').disabled=false}
-};
-$('savePdfBtn').onclick=saveProtocolPdf;$('printBtn').onclick=()=>window.print();
-init();
+*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#1c2733;font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:900px;margin:20px auto;padding:12px}.sheet{background:#fff;padding:24px;border-radius:12px;box-shadow:0 3px 18px #142a4018}h1{font-size:24px;text-align:center;margin:0 0 6px;color:#183d5c}#subtitle{text-align:center;color:#536779;margin:0 0 20px}.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:20px}.field{border:1px solid #d5dee7;border-radius:8px;padding:10px;overflow-wrap:anywhere}.field b{display:block;font-size:12px;color:#5a6b7b;text-transform:uppercase;margin-bottom:3px}.section{border:1px solid #cbd6e1;border-radius:9px;margin:14px 0;overflow:hidden}.section h2{font-size:16px;background:#f1f5f8;margin:0;padding:10px 12px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;padding:10px}.value{padding:7px 9px;background:#fafbfd;border-radius:6px;overflow-wrap:anywhere}.value b{display:block;font-size:12px;color:#5a6b7b}.notes{white-space:pre-wrap;padding:12px;overflow-wrap:anywhere}.signatures{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.sig{border:1px solid #d5dee7;border-radius:8px;padding:12px;min-height:100px}.sig img{display:block;max-width:100%;max-height:90px;object-fit:contain;margin-top:8px}#status{padding:14px;background:#fff;border-radius:10px;margin-bottom:12px;white-space:pre-wrap}.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0}button{background:#183d5c;color:#fff;border:0;border-radius:8px;padding:11px 16px;font:inherit;cursor:pointer;font-weight:600}button.secondary{background:#e4ebf1;color:#183d5c}button:disabled{opacity:.55}#signPanel{background:#fff;border-radius:10px;padding:18px;margin:14px 0;box-shadow:0 3px 18px #142a4018}label{display:block;font-weight:600;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid #bac7d4;border-radius:8px;font:inherit}canvas{width:100%;height:150px;border:2px dashed #8b9daf;border-radius:8px;background:#fff;touch-action:none;display:block}small{color:#526171}@media print{body{background:white}.sheet{box-shadow:none;padding:0;border-radius:0}main{margin:0;padding:0;max-width:none}#status,#signPanel,#actions{display:none!important}.section,.field,.sig{break-inside:avoid}h1{font-size:20px}}
+</style></head><body><main>
+<div id="status">Зареждане на протокола…</div>
+<article id="sheet" class="sheet" hidden><h1>Газов протокол</h1><p id="subtitle">Протокол за газови измервания — копие за клиента</p><div id="meta" class="meta"></div>
+<div class="section"><h2>Данни за клиента и обекта</h2><div id="client" class="grid"></div></div>
+<div class="section"><h2>Коректор</h2><div id="corrector" class="grid"></div></div>
+<div class="section"><h2>Разходомер</h2><div id="meter" class="grid"></div></div>
+<div class="section"><h2>Допълнителна информация</h2><div id="extra" class="grid"></div><div id="notes" class="notes"></div></div>
+<div class="signatures"><div class="sig"><b>Председател на доставчика</b><div id="techName"></div><div id="techSig"></div></div><div class="sig"><b>Клиент / представител</b><div id="clientNameView"></div><div id="clientSig"></div></div></div></article>
+<section id="signPanel" hidden><h2>Подпис на клиента</h2><label for="clientName">Име и фамилия</label><input id="clientName" autocomplete="name" maxlength="120" placeholder="Въведете името си"><label for="signature">Подпис с пръст или мишка</label><canvas id="signature" width="1200" height="380"></canvas><div class="actions"><button class="secondary" id="clearBtn" type="button">Изчисти подписа</button><button id="submitBtn" type="button">Потвърди подписа</button></div></section>
+<div class="actions" id="actions" hidden><button id="printBtn" type="button">Принтирай / Запази като PDF</button></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95f1m1UuBdjfvDJA_mXqTTMBl'),$=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');let signed=false,loaded=false,drawing=false,ink=false;
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function field(l,v){return '<div class="field"><b>'+esc(l)+'</b>'+esc(v??'—')+'</div>'}function value(l,v){return '<div class="value"><b>'+esc(l)+'</b>'+esc(v??'—')+'</div>'}function status(t,ok=false){$('status').textContent=t;$('status').style.background=ok?'#e7f6ec':'#fff'}
+function showSig(id,v){const m=String(v||'').match(/data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+/);if(m){const im=document.createElement('img');im.src=m[0];im.alt='Подпис';$(id).replaceChildren(im)}}
+function render(d){const p=d?.protocol||{};$('meta').innerHTML=field('Номер на протокола',p.pno)+field('Дата',p.date)+field('Клиент',p.client)+field('ЕИК',p.eik);$('client').innerHTML=value('Клиент / фирма',p.client)+value('ЕИК',p.eik)+value('Обект',p.site)+value('Адрес / контакт',p.contact)+value('Председател на доставчика',p.tech_name||p.tech);$('corrector').innerHTML=value('Модел',p.cbm)+value('Сериен номер',p.cs)+value('Дата на проверка',p.cd)+value('Начално показание',p.c1)+value('Крайно показание',p.c2)+value('Количество',p.cv);$('meter').innerHTML=value('Модел',p.mbm)+value('Сериен номер',p.ms)+value('Дата на проверка',p.md)+value('Начално показание',p.m1)+value('Крайно показание',p.m2)+value('Количество',p.mv);$('extra').innerHTML=value('Номер',p.pno)+value('Дата',p.date);$('notes').textContent=p.notes?'Забележки: '+p.notes:'Няма допълнителни забележки.';$('techName').textContent=p.tech_name||p.tech||'—';$('clientNameView').textContent=d.client_name||p.client_name||'—';showSig('techSig',p.tech_sig);showSig('clientSig',d.client_signature||p.client_sig);$('sheet').hidden=false;$('actions').hidden=false}
+async function init(){if(!token){status('Липсва защитеният линк. Отворете пълния линк, изпратен от приложението.');return}try{const {data,error}=await sb.rpc('get_protocol_for_signing',{p_token:token});if(error)throw error;signed=!!data.signed;loaded=true;render(data);if(signed){$('signPanel').hidden=true;status('Протоколът вече е подписан. Можете да го принтирате или да го запазите като PDF.',true)}else{$('signPanel').hidden=false;status('Проверете протокола и подпишете, ако данните са правилни.',true)}}catch(e){console.error(e);status(e.message||'Не успяхме да заредим протокола. Проверете линка и опитайте отново.')}}
+const c=$('signature'),ctx=c.getContext('2d');ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#152536';function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}c.addEventListener('pointerdown',e=>{if(!loaded||signed)return;drawing=true;ink=true;c.setPointerCapture(e.pointerId);const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()});c.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()});function stop(){drawing=false}c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
+$('clearBtn').onclick=()=>{ctx.clearRect(0,0,c.width,c.height);ink=false};$('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('clientName').value.trim();if(name.length<2){status('Моля, въведете името си.');return}if(!ink){status('Моля, поставете подпис в полето.');return}$('submitBtn').disabled=true;status('Записване на подписа…');try{const sig=c.toDataURL('image/png'),{error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:sig});if(error)throw error;signed=true;$('clientNameView').textContent=name;showSig('clientSig',sig);$('signPanel').hidden=true;status('Подписът е записан успешно. Можете да принтирате или да запазите целия протокол като PDF.',true)}catch(e){console.error(e);status(e.message||'Не успяхме да запишем подписа. Опитайте отново.');$('submitBtn').disabled=false}};$('printBtn').onclick=()=>window.print();init();
 </script></body></html>
