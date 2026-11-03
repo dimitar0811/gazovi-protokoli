@@ -703,7 +703,7 @@ body{background:#eef3f7!important}main{max-width:1050px;margin:10px auto;padding
  </div>
 </div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl');
 const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
 const ids=['pno','date','client','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes','techName','clientName'];
@@ -723,65 +723,24 @@ $('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('tech').
 function fitProtocolToOnePage(){const sheet=$('sheet');if(!sheet)return;const printableHeight=1050;const naturalHeight=sheet.scrollHeight;const scale=Math.min(1,printableHeight/Math.max(naturalHeight,1));sheet.style.setProperty('--print-scale',String(Math.max(.68,scale)));}
 window.addEventListener('beforeprint',fitProtocolToOnePage);window.addEventListener('afterprint',()=> $('sheet').style.removeProperty('--print-scale'));
 $('printBtn').onclick=()=>window.print();
-function loadScriptFallback(urls,test){
- return new Promise((resolve,reject)=>{
-  if(test()){resolve();return}
-  let index=0;
-  const next=()=>{
-   if(test()){resolve();return}
-   if(index>=urls.length){reject(new Error('Неуспешно зареждане на PDF библиотека от всички резервни източници.'));return}
-   const script=document.createElement('script');script.src=urls[index++];script.async=true;
-   script.onload=()=>test()?resolve():next();
-   script.onerror=()=>{script.remove();next()};
-   document.head.appendChild(script);
-  };
-  next();
- });
+function saveProtocolPdf(){
+ const modal=$('pdfSuccessModal');
+ $('pdfSuccessTitle').textContent='Запазване на протокола като PDF';
+ modal.querySelector('p').textContent='Ще се отвори прозорецът за печат на телефона. От списъка с принтери избери „Запазване като PDF“, след това натисни бутона за запазване.';
+ $('closePdfSuccess').textContent='Продължи към запазване';
+ modal.classList.add('show');
 }
-async function ensurePdfLibraries(){
- await loadScriptFallback([
-  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
-  'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
- ],()=>typeof window.html2canvas==='function');
- await loadScriptFallback([
-  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
-  'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'
- ],()=>typeof window.jspdf?.jsPDF==='function');
-}
-async function saveProtocolPdf(){
- const btn=$('savePdfBtn'),original=$('sheet');
- if(!original)return;
- try{await ensurePdfLibraries()}catch(loadError){console.error(loadError);status('PDF библиотеките не могат да се заредят. Проверете връзката и опитайте отново.');return}
- btn.disabled=true;const oldText=btn.textContent;btn.textContent='Създаване на PDF…';status('Подготвяне на PDF файла…');
- let clone=null;
- try{
-  clone=original.cloneNode(true);clone.removeAttribute('id');clone.classList.add('pdf-export-root');
-  clone.style.cssText='position:fixed;left:-12000px;top:0;width:794px;max-width:none;margin:0;padding:12px;background:#fff;color:#172536;border:0;border-radius:0;box-shadow:none;overflow:visible;transform:none;zoom:1';
-  const sourceInputs=original.querySelectorAll('input'),copyInputs=clone.querySelectorAll('input');
-  copyInputs.forEach((el,i)=>{if(sourceInputs[i]){el.value=sourceInputs[i].value;el.setAttribute('value',sourceInputs[i].value)}});
-  const sourceAreas=original.querySelectorAll('textarea'),copyAreas=clone.querySelectorAll('textarea');
-  copyAreas.forEach((el,i)=>{if(sourceAreas[i]){el.value=sourceAreas[i].value;el.textContent=sourceAreas[i].value}});
-  clone.querySelectorAll('details').forEach(el=>el.open=true);
-  clone.querySelectorAll('.no-print,button').forEach(el=>el.remove());
-  const exportStyle=document.createElement('style');
-  exportStyle.textContent='.pdf-export-root{width:794px!important;font-family:Arial,sans-serif!important}.pdf-export-root .grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important}.pdf-export-root .span2{grid-column:span 2!important}.pdf-export-root .span3{grid-column:span 3!important}.pdf-export-root .span4{grid-column:span 4!important}.pdf-export-root .span6{grid-column:span 6!important}.pdf-export-root input,.pdf-export-root textarea{pointer-events:none!important;opacity:1!important;color:#172536!important;background:#fff!important}.pdf-export-root img{max-width:100%;object-fit:contain}.pdf-export-root .section{break-inside:avoid}.pdf-export-root{height:auto!important;min-height:0!important}';
-  clone.prepend(exportStyle);document.body.appendChild(clone);
-  if(document.fonts?.ready)await document.fonts.ready;
-  await Promise.all(Array.from(clone.images).map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve})));
-  const canvas=await window.html2canvas(clone,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,scrollX:0,scrollY:0});
-  if(!canvas.width||!canvas.height)throw new Error('Не може да се създаде изображение на протокола.');
-  const PDF=window.jspdf.jsPDF,pdf=new PDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
-  const pageW=210,pageH=297,scale=Math.min(pageW/canvas.width,pageH/canvas.height),w=canvas.width*scale,h=canvas.height*scale;
-  pdf.addImage(canvas.toDataURL('image/jpeg',0.96),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
-  const number=($('pno')?.value||'').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'-');
-  pdf.save('Protokol'+(number?'-'+number:'')+'.pdf');
-  status('PDF файлът е създаден успешно и е изпратен за изтегляне.',true);$('pdfSuccessModal').classList.add('show');$('closePdfSuccess').focus();
- }catch(e){console.error(e);status(e.message||'Грешка при създаване на PDF файла.')}
- finally{if(clone?.parentNode)clone.parentNode.removeChild(clone);btn.disabled=false;btn.textContent=oldText}
-}
-$('closePdfSuccess').onclick=()=>{$('pdfSuccessModal').classList.remove('show')};
+
+$('closePdfSuccess').onclick=()=>{
+ const modal=$('pdfSuccessModal');
+ modal.classList.remove('show');
+ $('pdfSuccessTitle').textContent='Запазване на протокола като PDF';
+ $('closePdfSuccess').textContent='Продължи към запазване';
+ try{fitProtocolToOnePage();window.print()}catch(e){status('Не успяхме да отворим прозореца за печат. Отвори приложението в Chrome и опитай отново.')}
+};
 $('pdfSuccessModal').addEventListener('click',e=>{if(e.target===$('pdfSuccessModal'))$('pdfSuccessModal').classList.remove('show')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('pdfSuccessModal').classList.remove('show')});
+
 $('savePdfBtn').onclick=saveProtocolPdf;
 init();
 </script></body></html>
