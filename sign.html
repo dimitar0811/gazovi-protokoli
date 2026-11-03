@@ -565,6 +565,14 @@ svg:not(:root).svg-inline--fa, svg:not(:host).svg-inline--fa {
 
 </style>
 <style>
+#pdfSuccessModal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,25,40,.68);align-items:center;justify-content:center;padding:20px}
+#pdfSuccessModal.show{display:flex}
+#pdfSuccessModal .pdf-success-card{width:min(100%,420px);background:#fff;color:#172536;border-radius:16px;padding:26px 22px;text-align:center;box-shadow:0 18px 55px #0005}
+#pdfSuccessModal .pdf-success-icon{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:#e7f6ed;color:#168044;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:bold}
+#pdfSuccessModal h2{font-size:21px;line-height:1.25;margin:0 0 10px;color:#123b60}
+#pdfSuccessModal p{font-size:15px;line-height:1.5;margin:0 0 20px}
+#pdfSuccessModal button{width:100%;border:0;border-radius:9px;padding:13px 16px;background:#123b60;color:#fff;font-size:16px;font-weight:bold}
+@media print{#pdfSuccessModal{display:none!important}}
 *{box-sizing:border-box}body{margin:0;background:#eef3f7;color:#172536;font-family:Arial,sans-serif}
 header{background:#123b60;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
 header h1{font-size:18px;margin:0}.lang button{padding:6px 9px;border:0;border-radius:6px;background:#dce8f2;color:#123b60;font-weight:bold}
@@ -686,6 +694,14 @@ body{background:#eef3f7!important}main{max-width:1050px;margin:10px auto;padding
 </div>
 <section id="signPanel" hidden><h3>Подпис на клиента / представителя</h3><p>Името се взема от полето „Представител на клиента“ в протокола.</p><label for="signature">Подпис с пръст или мишка:</label><canvas id="signature" width="1200" height="380"></canvas><div class="actions"><button type="button" id="clearBtn">Изчисти подписа</button><button type="button" id="submitBtn">Потвърди подписа</button></div></section>
 <div id="actions" hidden><button type="button" id="printBtn">Принтирай</button><button type="button" id="savePdfBtn">Запази като PDF</button></div>
+<div id="pdfSuccessModal" role="dialog" aria-modal="true" aria-labelledby="pdfSuccessTitle">
+ <div class="pdf-success-card">
+  <div class="pdf-success-icon" aria-hidden="true">✓</div>
+  <h2 id="pdfSuccessTitle">PDF файлът е създаден успешно!</h2>
+  <p>Файлът е изпратен за изтегляне. Можеш да го намериш в папка „Изтегляния“ на телефона.</p>
+  <button type="button" id="closePdfSuccess">Разбрах</button>
+ </div>
+</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script><script>
 const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl');
@@ -734,10 +750,13 @@ async function saveProtocolPdf(){
   pdf.addImage(canvas.toDataURL('image/jpeg',0.96),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
   const number=($('pno')?.value||'').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'-');
   pdf.save('Protokol'+(number?'-'+number:'')+'.pdf');
-  status('PDF файлът е създаден успешно и е изпратен за изтегляне.',true);window.alert('PDF файлът е създаден успешно! Можете да го намерите в папка „Изтегляния“ на телефона.');
+  status('PDF файлът е създаден успешно и е изпратен за изтегляне.',true);$('pdfSuccessModal').classList.add('show');$('closePdfSuccess').focus();
  }catch(e){console.error(e);status(e.message||'Грешка при създаване на PDF файла.')}
  finally{if(clone?.parentNode)clone.parentNode.removeChild(clone);btn.disabled=false;btn.textContent=oldText}
 }
+$('closePdfSuccess').onclick=()=>{$('pdfSuccessModal').classList.remove('show')};
+$('pdfSuccessModal').addEventListener('click',e=>{if(e.target===$('pdfSuccessModal'))$('pdfSuccessModal').classList.remove('show')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('pdfSuccessModal').classList.remove('show')});
 $('savePdfBtn').onclick=saveProtocolPdf;
 init();
 </script></body></html>
