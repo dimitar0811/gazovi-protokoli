@@ -723,10 +723,35 @@ $('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('tech').
 function fitProtocolToOnePage(){const sheet=$('sheet');if(!sheet)return;const printableHeight=1050;const naturalHeight=sheet.scrollHeight;const scale=Math.min(1,printableHeight/Math.max(naturalHeight,1));sheet.style.setProperty('--print-scale',String(Math.max(.68,scale)));}
 window.addEventListener('beforeprint',fitProtocolToOnePage);window.addEventListener('afterprint',()=> $('sheet').style.removeProperty('--print-scale'));
 $('printBtn').onclick=()=>window.print();
+function loadScriptFallback(urls,test){
+ return new Promise((resolve,reject)=>{
+  if(test()){resolve();return}
+  let index=0;
+  const next=()=>{
+   if(test()){resolve();return}
+   if(index>=urls.length){reject(new Error('Неуспешно зареждане на PDF библиотека от всички резервни източници.'));return}
+   const script=document.createElement('script');script.src=urls[index++];script.async=true;
+   script.onload=()=>test()?resolve():next();
+   script.onerror=()=>{script.remove();next()};
+   document.head.appendChild(script);
+  };
+  next();
+ });
+}
+async function ensurePdfLibraries(){
+ await loadScriptFallback([
+  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+  'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
+ ],()=>typeof window.html2canvas==='function');
+ await loadScriptFallback([
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+  'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'
+ ],()=>typeof window.jspdf?.jsPDF==='function');
+}
 async function saveProtocolPdf(){
  const btn=$('savePdfBtn'),original=$('sheet');
  if(!original)return;
- if(typeof window.html2canvas!=='function'||!window.jspdf?.jsPDF){status('PDF библиотеките не се заредиха. Проверете интернет връзката и опитайте отново.');return}
+ try{await ensurePdfLibraries()}catch(loadError){console.error(loadError);status('PDF библиотеките не могат да се заредят. Проверете връзката и опитайте отново.');return}
  btn.disabled=true;const oldText=btn.textContent;btn.textContent='Създаване на PDF…';status('Подготвяне на PDF файла…');
  let clone=null;
  try{
