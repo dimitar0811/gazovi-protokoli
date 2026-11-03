@@ -703,7 +703,7 @@ body{background:#eef3f7!important}main{max-width:1050px;margin:10px auto;padding
  </div>
 </div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+<script src="./libs/html2pdf.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl');
 const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
 const ids=['pno','date','client','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes','techName','clientName'];
@@ -723,24 +723,47 @@ $('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('tech').
 function fitProtocolToOnePage(){const sheet=$('sheet');if(!sheet)return;const printableHeight=1050;const naturalHeight=sheet.scrollHeight;const scale=Math.min(1,printableHeight/Math.max(naturalHeight,1));sheet.style.setProperty('--print-scale',String(Math.max(.68,scale)));}
 window.addEventListener('beforeprint',fitProtocolToOnePage);window.addEventListener('afterprint',()=> $('sheet').style.removeProperty('--print-scale'));
 $('printBtn').onclick=()=>window.print();
-function saveProtocolPdf(){
+async function saveProtocolPdf(){
+ const button=$('savePdfBtn');
  const modal=$('pdfSuccessModal');
- $('pdfSuccessTitle').textContent='Запазване на протокола като PDF';
- modal.querySelector('p').textContent='Ще се отвори прозорецът за печат на телефона. От списъка с принтери избери „Запазване като PDF“, след това натисни бутона за запазване.';
- $('closePdfSuccess').textContent='Продължи към запазване';
- modal.classList.add('show');
+ const title=$('pdfSuccessTitle');
+ const message=modal.querySelector('p');
+ if(typeof window.html2pdf!=='function'){
+  status('PDF модулът не се зареди. Провери интернет връзката и опитай отново.');
+  return;
+ }
+ button.disabled=true;
+ button.textContent='Създаване на PDF…';
+ status('Създаване на PDF файл…');
+ try{
+  const sheet=$('sheet');
+  const protocolNo=($('pno').value||'protokol').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'_');
+  const protocolDate=($('date').value||new Date().toISOString().slice(0,10)).trim().replace(/[^0-9.-]+/g,'_');
+  const fileName='Protokol_'+protocolNo+'_'+protocolDate+'.pdf';
+  await html2pdf().set({
+   margin:[7,7,7,7],
+   filename:fileName,
+   image:{type:'jpeg',quality:0.96},
+   html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:794},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
+   pagebreak:{mode:['css','legacy'],avoid:['.section','.footer','.signature']}
+  }).from(sheet).save();
+  title.textContent='PDF файлът е създаден!';
+  message.textContent='Файлът '+fileName+' е генериран и изпратен за изтегляне. Провери папка „Изтегляния“ на телефона.';
+  $('closePdfSuccess').textContent='Затвори';
+  modal.classList.add('show');
+  status('PDF файлът е генериран.',true);
+ }catch(e){
+  console.error('PDF export error:',e);
+  status('Не успяхме да създадем PDF. Опитай отново или провери свободното място на телефона.');
+ }finally{
+  button.disabled=false;
+  button.textContent='Запази като PDF';
+ }
 }
-
-$('closePdfSuccess').onclick=()=>{
- const modal=$('pdfSuccessModal');
- modal.classList.remove('show');
- $('pdfSuccessTitle').textContent='Запазване на протокола като PDF';
- $('closePdfSuccess').textContent='Продължи към запазване';
- try{fitProtocolToOnePage();window.print()}catch(e){status('Не успяхме да отворим прозореца за печат. Отвори приложението в Chrome и опитай отново.')}
-};
+$('closePdfSuccess').onclick=()=> $('pdfSuccessModal').classList.remove('show');
 $('pdfSuccessModal').addEventListener('click',e=>{if(e.target===$('pdfSuccessModal'))$('pdfSuccessModal').classList.remove('show')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('pdfSuccessModal').classList.remove('show')});
-
 $('savePdfBtn').onclick=saveProtocolPdf;
 init();
 </script></body></html>
