@@ -65,6 +65,8 @@ begin
   select jsonb_build_object(
     'protocol', r.protocol_snapshot,
     'signed', (r.signed_at is not null),
+    'client_name', r.client_name,
+    'client_signature', r.client_signature,
     'expires_at', r.expires_at
   ) into v_data
   from public.protocol_signing_requests r
