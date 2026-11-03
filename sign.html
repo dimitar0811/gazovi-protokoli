@@ -687,7 +687,7 @@ body{background:#eef3f7!important}main{max-width:1050px;margin:10px auto;padding
 <section id="signPanel" hidden><h3>Подпис на клиента / представителя</h3><p>Името се взема от полето „Представител на клиента“ в протокола.</p><label for="signature">Подпис с пръст или мишка:</label><canvas id="signature" width="1200" height="380"></canvas><div class="actions"><button type="button" id="clearBtn">Изчисти подписа</button><button type="button" id="submitBtn">Потвърди подписа</button></div></section>
 <div id="actions" hidden><button type="button" id="printBtn">Принтирай</button><button type="button" id="savePdfBtn">Запази като PDF</button></div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script><script>
 const sb=window.supabase.createClient('https://dryzqeychhxquhmieeuu.supabase.co','sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl');
 const $=id=>document.getElementById(id),token=new URLSearchParams(location.search).get('token');
 const ids=['pno','date','client','eik','tech','site','contact','cbm','cs','cd','c1','c2','cv','mbm','ms','md','m1','m2','mv','notes','techName','clientName'];
@@ -706,5 +706,38 @@ $('clearBtn').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ink=fal
 $('submitBtn').onclick=async()=>{if(!loaded||signed)return;const name=$('tech').value.trim()||$('clientName').value.trim();if(name.length<2){status('Моля, въведете името си.');return}if(!ink){status('Моля, поставете подписа си.');return}$('submitBtn').disabled=true;status('Записване на подписа…');try{const sig=canvas.toDataURL('image/png'),{error}=await sb.rpc('submit_protocol_signature',{p_token:token,p_client_name:name,p_client_signature:sig});if(error)throw error;signed=true;$('clientName').value=name;setSig('clientSig',sig);$('signPanel').hidden=true;status('Подписът е записан. Можете да запазите или принтирате протокола.',true)}catch(e){console.error(e);status(e.message||'Грешка при запис на подписа.');$('submitBtn').disabled=false}};
 function fitProtocolToOnePage(){const sheet=$('sheet');if(!sheet)return;const printableHeight=1050;const naturalHeight=sheet.scrollHeight;const scale=Math.min(1,printableHeight/Math.max(naturalHeight,1));sheet.style.setProperty('--print-scale',String(Math.max(.68,scale)));}
 window.addEventListener('beforeprint',fitProtocolToOnePage);window.addEventListener('afterprint',()=> $('sheet').style.removeProperty('--print-scale'));
-$('printBtn').onclick=()=>window.print();$('savePdfBtn').onclick=()=>window.print();init();
+$('printBtn').onclick=()=>window.print();
+async function saveProtocolPdf(){
+ const btn=$('savePdfBtn'),original=$('sheet');
+ if(!original)return;
+ if(typeof window.html2canvas!=='function'||!window.jspdf?.jsPDF){status('PDF библиотеките не се заредиха. Проверете интернет връзката и опитайте отново.');return}
+ btn.disabled=true;const oldText=btn.textContent;btn.textContent='Създаване на PDF…';status('Подготвяне на PDF файла…');
+ let clone=null;
+ try{
+  clone=original.cloneNode(true);clone.removeAttribute('id');clone.classList.add('pdf-export-root');
+  clone.style.cssText='position:fixed;left:-12000px;top:0;width:794px;max-width:none;margin:0;padding:12px;background:#fff;color:#172536;border:0;border-radius:0;box-shadow:none;overflow:visible;transform:none;zoom:1';
+  const sourceInputs=original.querySelectorAll('input'),copyInputs=clone.querySelectorAll('input');
+  copyInputs.forEach((el,i)=>{if(sourceInputs[i]){el.value=sourceInputs[i].value;el.setAttribute('value',sourceInputs[i].value)}});
+  const sourceAreas=original.querySelectorAll('textarea'),copyAreas=clone.querySelectorAll('textarea');
+  copyAreas.forEach((el,i)=>{if(sourceAreas[i]){el.value=sourceAreas[i].value;el.textContent=sourceAreas[i].value}});
+  clone.querySelectorAll('details').forEach(el=>el.open=true);
+  clone.querySelectorAll('.no-print,button').forEach(el=>el.remove());
+  const exportStyle=document.createElement('style');
+  exportStyle.textContent='.pdf-export-root{width:794px!important;font-family:Arial,sans-serif!important}.pdf-export-root .grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important}.pdf-export-root .span2{grid-column:span 2!important}.pdf-export-root .span3{grid-column:span 3!important}.pdf-export-root .span4{grid-column:span 4!important}.pdf-export-root .span6{grid-column:span 6!important}.pdf-export-root input,.pdf-export-root textarea{pointer-events:none!important;opacity:1!important;color:#172536!important;background:#fff!important}.pdf-export-root img{max-width:100%;object-fit:contain}.pdf-export-root .section{break-inside:avoid}.pdf-export-root{height:auto!important;min-height:0!important}';
+  clone.prepend(exportStyle);document.body.appendChild(clone);
+  if(document.fonts?.ready)await document.fonts.ready;
+  await Promise.all(Array.from(clone.images).map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve})));
+  const canvas=await window.html2canvas(clone,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,scrollX:0,scrollY:0});
+  if(!canvas.width||!canvas.height)throw new Error('Не може да се създаде изображение на протокола.');
+  const PDF=window.jspdf.jsPDF,pdf=new PDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+  const pageW=210,pageH=297,scale=Math.min(pageW/canvas.width,pageH/canvas.height),w=canvas.width*scale,h=canvas.height*scale;
+  pdf.addImage(canvas.toDataURL('image/jpeg',0.96),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
+  const number=($('pno')?.value||'').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'-');
+  pdf.save('Protokol'+(number?'-'+number:'')+'.pdf');
+  status('PDF файлът е създаден. Проверете папка „Изтегляния“ на телефона.',true);
+ }catch(e){console.error(e);status(e.message||'Грешка при създаване на PDF файла.')}
+ finally{if(clone?.parentNode)clone.parentNode.removeChild(clone);btn.disabled=false;btn.textContent=oldText}
+}
+$('savePdfBtn').onclick=saveProtocolPdf;
+init();
 </script></body></html>
