@@ -724,42 +724,37 @@ function fitProtocolToOnePage(){const sheet=$('sheet');if(!sheet)return;const pr
 window.addEventListener('beforeprint',fitProtocolToOnePage);window.addEventListener('afterprint',()=> $('sheet').style.removeProperty('--print-scale'));
 $('printBtn').onclick=()=>window.print();
 async function saveProtocolPdf(){
- const button=$('savePdfBtn');
- const modal=$('pdfSuccessModal');
- const title=$('pdfSuccessTitle');
- const message=modal.querySelector('p');
- if(typeof window.html2pdf!=='function'){
-  status('PDF модулът не се зареди. Провери интернет връзката и опитай отново.');
-  return;
- }
- button.disabled=true;
- button.textContent='Създаване на PDF…';
- status('Създаване на PDF файл…');
+ const button=$('savePdfBtn'),modal=$('pdfSuccessModal'),title=$('pdfSuccessTitle'),message=modal.querySelector('p');
+ if(typeof window.html2pdf!=='function'){status('PDF модулът не се зареди. Провери интернет връзката и опитай отново.');return;}
+ button.disabled=true;button.textContent='Създаване на PDF…';status('Създаване на PDF файл…');
  try{
   const sheet=$('sheet');
-  const protocolNo=($('pno').value||'protokol').trim().replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,'_');
-  const protocolDate=($('date').value||new Date().toISOString().slice(0,10)).trim().replace(/[^0-9.-]+/g,'_');
+  const safe=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}_-]+/gu,'_').replace(/^_+|_+$/g,'').slice(0,60);
+  const protocolNo=safe($('pno').value)||'protokol';
+  const protocolDate=safe($('date').value)||new Date().toISOString().slice(0,10);
   const fileName='Protokol_'+protocolNo+'_'+protocolDate+'.pdf';
-  await html2pdf().set({
-   margin:[7,7,7,7],
-   filename:fileName,
-   image:{type:'jpeg',quality:0.96},
+  const worker=html2pdf().set({
+   margin:[7,7,7,7],image:{type:'jpeg',quality:0.96},
    html2canvas:{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:794},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
    pagebreak:{mode:['css','legacy'],avoid:['.section','.footer','.signature']}
-  }).from(sheet).save();
-  title.textContent='PDF файлът е създаден!';
-  message.textContent='Файлът '+fileName+' е генериран и изпратен за изтегляне. Провери папка „Изтегляния“ на телефона.';
-  $('closePdfSuccess').textContent='Затвори';
-  modal.classList.add('show');
-  status('PDF файлът е генериран.',true);
- }catch(e){
-  console.error('PDF export error:',e);
-  status('Не успяхме да създадем PDF. Опитай отново или провери свободното място на телефона.');
- }finally{
-  button.disabled=false;
-  button.textContent='Запази като PDF';
- }
+  }).from(sheet);
+  const blob=await worker.outputPdf('blob');
+  let savedToChosenLocation=false;
+  if(typeof window.showSaveFilePicker==='function'){
+   try{
+    const handle=await window.showSaveFilePicker({suggestedName:fileName,types:[{description:'PDF документ',accept:{'application/pdf':['.pdf']}}]});
+    const writable=await handle.createWritable();await writable.write(blob);await writable.close();savedToChosenLocation=true;
+   }catch(e){if(e?.name==='AbortError'){status('Запазването е отменено.');return;}console.warn('Save location picker unavailable:',e);}
+  }
+  if(!savedToChosenLocation){
+   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }
+  title.textContent='PDF файлът е готов!';
+  message.textContent=savedToChosenLocation?'Файлът е запазен в избраното от теб място.':'Файлът е изпратен за изтегляне. Ако браузърът не предложи избор на папка, провери настройките за изтегляния.';
+  $('closePdfSuccess').textContent='Затвори';modal.classList.add('show');status('PDF файлът е готов.',true);
+ }catch(e){console.error('PDF export error:',e);status('Не успяхме да създадем или запазим PDF. Опитай отново.');}
+ finally{button.disabled=false;button.textContent='Запази като PDF';}
 }
 $('closePdfSuccess').onclick=()=> $('pdfSuccessModal').classList.remove('show');
 $('pdfSuccessModal').addEventListener('click',e=>{if(e.target===$('pdfSuccessModal'))$('pdfSuccessModal').classList.remove('show')});
