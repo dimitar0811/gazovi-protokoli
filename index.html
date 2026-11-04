@@ -1747,7 +1747,7 @@ function renderInvoicingList(){
  };
 }
 async function openInvoiceProtocol(pno){
- if(!['admin','accounting'].includes(currentUserRole)){alert('Нямате достъп до протоколите за фактуриране.');return;}
+ if(!['admin','accounting','accountant','счетоводство','счетоводител','счетоводители'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Нямате достъп до протоколите за фактуриране.');return;}
  const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).eq('pno',pno).maybeSingle();
  if(error||!data){alert('Не успях да отворя протокола: '+(error?.message||'не е намерен'));return;}
  const d=cloudToLocal(data),a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);
@@ -1764,7 +1764,7 @@ async function openInvoiceProtocol(pno){
  }
 }
 async function setInvoiceStatus(pno,status){
- if(!['admin','accounting'].includes(currentUserRole)){alert('Само счетоводството може да променя статуса.');return;}
+ if(!['admin','accounting','accountant','счетоводство','счетоводител','счетоводители'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Само счетоводството може да променя статуса.');return;}
  const updates=status==='processed'?{accounting_status:'processed',accounting_processed_at:new Date().toISOString()}:{accounting_status:'pending',accounting_processed_at:null};
  const {error}=await sb.from('protocols').update(updates).eq('company_id',currentCompanyId).eq('pno',pno);
  if(error){alert('Не успях да сменя статуса. Проверете настройките на базата данни. '+error.message);return;}
