@@ -18,8 +18,9 @@
 <div class="section"><h2>Допълнителна информация</h2><div id="extra" class="grid"></div><div id="notes" class="notes"></div></div>
 <div class="signatures"><div class="sig"><b>Председател на доставчика</b><div id="techName"></div><div id="techSig"></div></div><div class="sig"><b>Клиент / представител</b><div id="clientName"></div><div id="clientSig"></div></div></div>
 </article>
-<div class="actions" id="actions" hidden><button type="button" onclick="window.print()">Печат / Запази като PDF</button></div>
+<div class="actions" id="actions" hidden><button type="button" onclick="window.print()">Печат</button><button type="button" id="savePdfBtn" onclick="saveProtocolPdf()">Запази като PDF</button></div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
@@ -33,13 +34,40 @@ function signature(el,v){
  const s=String(v||''),m=s.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
  if(m)$(el).innerHTML='<img alt="Подпис" src="data:image/png;base64,'+m[1]+'">';
 }
+async function saveProtocolPdf(){
+ const button=$('savePdfBtn'),status=$('status');
+ if(typeof html2pdf==='undefined'){
+  status.textContent='Не успяхме да заредим инструмента за PDF. Проверете интернет връзката и опитайте отново.';
+  return;
+ }
+ const pno=(window.protocolNumber||'protocol').toString().replace(/[^a-z0-9_-]/gi,'_');
+ const date=(window.protocolDate||new Date().toISOString().slice(0,10)).toString().replace(/[^0-9-]/g,'');
+ const oldText=button.textContent;
+ button.disabled=true;button.textContent='Подготовка на PDF…';
+ try{
+  await html2pdf().set({
+   margin:[8,8,8,8],
+   filename:'Gazov-protokol-'+pno+'-'+date+'.pdf',
+   image:{type:'jpeg',quality:0.98},
+   html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+   pagebreak:{mode:['css','legacy']}
+  }).from($('sheet')).save();
+  status.textContent='PDF файлът е подготвен. Проверете папката „Изтегляния“ на устройството.';
+ }catch(e){
+  console.error(e);
+  status.textContent='Възникна проблем при създаването на PDF. '+(e?.message||'Опитайте отново.');
+ }finally{
+  button.disabled=false;button.textContent=oldText;
+ }
+}
 async function init(){
  const token=new URLSearchParams(location.search).get('token');
  if(!token){$('status').textContent='Липсва защитеният линк. Отворете пълния линк, изпратен от приложението.';return}
  try{
   const {data,error}=await sb.rpc('get_protocol_for_accounting',{p_token:token});
   if(error)throw error;
-  const p=data?.protocol||{};
+  const p=data?.protocol||{};window.protocolNumber=p.pno||'protocol';window.protocolDate=p.date||new Date().toISOString().slice(0,10);
   $('meta').innerHTML=field('Номер на протокола',p.pno)+field('Дата',p.date)+field('Клиент',p.client)+field('ЕИК',p.eik);
   $('client').innerHTML=value('Клиент / фирма',p.client)+value('ЕИК',p.eik)+value('Обект',p.site)+value('Адрес / контакт',p.contact)+value('Председател на доставчика',p.tech_name||p.tech);
   $('corrector').innerHTML=value('Модел',p.cbm)+value('Сериен номер',p.cs)+value('Дата на проверка',p.cd)+value('Начално показание',p.c1)+value('Крайно показание',p.c2)+value('Количество',p.cv);
