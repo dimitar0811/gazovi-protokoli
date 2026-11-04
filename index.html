@@ -1753,7 +1753,7 @@ async function openInvoiceProtocol(pno){
  const d=cloudToLocal(data),a=archiveData();let i=a.findIndex(x=>x.pno===d.pno);
  if(i>=0)a[i]=d;else{a.unshift(d);i=0;}
  localStorage.setItem('gasProtocolArchive',JSON.stringify(a));
- closeInvoicingList();openArchived(i);
+ $('invoicingModal').style.display='none';openArchived(i);
  $('protocolMain').style.display='block';
  $('zoomControls').style.display='none';
  if(currentUserRole==='accounting'){
