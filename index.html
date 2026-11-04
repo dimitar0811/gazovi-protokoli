@@ -1385,7 +1385,7 @@ function applyPdfZoom(){
  viewport.style.overflowX='auto';
 }
 function changePdfZoom(delta){pdfZoom=delta===0?1:Math.max(.6,Math.min(3,pdfZoom+delta));applyPdfZoom();}
-function downloadCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const safe=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,60);const filename='Protokol-'+(safe($('pno').value)||'bez-nomer')+'-'+(safe($('client').value)||'klient')+'.pdf';const u=URL.createObjectURL(currentPdfBlob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+async function downloadCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const safe=v=>String(v||'').trim().replace(/[^\\p{L}\\p{N}-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,60);const filename='Protokol-'+(safe($('pno').value)||'bez-nomer')+'-'+(safe($('client').value)||'klient')+'.pdf';if(typeof window.showSaveFilePicker==='function'){try{const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'PDF документ',accept:{'application/pdf':['.pdf']}}]});const writable=await handle.createWritable();await writable.write(currentPdfBlob);await writable.close();return;}catch(e){if(e?.name==='AbortError')return;console.warn('Save picker unavailable; using browser download:',e);}}const u=URL.createObjectURL(currentPdfBlob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
 function printCurrentPdf(){if(!currentPdfBlob){alert('Първо изчакай PDF да се зареди.');return;}const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(isMobile){downloadCurrentPdf();alert('Протоколът е запазен като PDF. Отвори „Изтегляния“, отвори файла и избери „Печат“ или „Запазване като PDF“.');return;}const url=URL.createObjectURL(currentPdfBlob);const frame=document.createElement('iframe');frame.style.position='fixed';frame.style.right='0';frame.style.bottom='0';frame.style.width='1px';frame.style.height='1px';frame.style.border='0';frame.style.opacity='0';frame.setAttribute('aria-hidden','true');frame.onload=()=>{try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){downloadCurrentPdf();alert('Не успях да отворя печата. PDF файлът е подготвен за запазване.');}setTimeout(()=>{frame.remove();URL.revokeObjectURL(url);},60000);};frame.src=url;document.body.appendChild(frame);}
 function closePdfViewer(){$('pdfViewerModal').style.display='none';$('pdfPages').innerHTML='';currentPdfBlob=null;pdfDoc=null;}
 (function enablePdfPinch(){
@@ -1758,9 +1758,11 @@ async function openInvoiceProtocol(pno,outputAction=null){
  $('invoicingModal').style.display='none';openArchived(i);
  $('protocolMain').style.display='block';
  $('zoomControls').style.display='none';
- if(outputAction==='print'||outputAction==='savepdf'){
+ if(outputAction==='print'){
   await openPdfViewer();
-  if(currentPdfBlob){if(outputAction==='print')printCurrentPdf();else downloadCurrentPdf();}
+  if(currentPdfBlob)printCurrentPdf();
+ }else if(outputAction==='savepdf'){
+  await openPdfViewer();
  }
  if(currentUserRole==='accounting'){
   $('protocolMain').querySelectorAll('input,textarea').forEach(el=>el.readOnly=true);
