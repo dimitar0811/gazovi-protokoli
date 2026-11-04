@@ -959,7 +959,7 @@ async function onSignedIn(user){
   const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
   if(shareButton)shareButton.style.display=isAccountingRole()?'none':'';
   const globalLogout=$('userBar').querySelector('button[onclick="logout()"]');
-  if(globalLogout)globalLogout.style.display=isAccountingRole()?'none':'';
+  if(globalLogout)globalLogout.style.display='';
   const invoiceClose=$('invoicingCloseBtn');
   if(invoiceClose)invoiceClose.style.display=isAccountingRole()?'none':'';
   const accountingLogout=$('accountingLogoutBtn');
