@@ -698,6 +698,10 @@ details.compact-details[open]>summary:before{content:"−"}
   </div>
 </div>
 <main id="protocolMain" style="display:none">\n<div class="no-print" style="margin:0 0 10px"><button type="button" class="secondary" onclick="showHomeMenu()" style="width:100%;font-weight:bold">✕ Затвори протокола и се върни към счетоводството</button></div>
+<div id="accountingPdfActions" class="no-print" style="display:none;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px;background:#eef4f8;border:1px solid #cbd8e4;border-radius:9px">
+<button id="accountingPrintBtn" type="button" onclick="accountingProtocolOutput('print')" style="flex:1;min-width:140px">🖨️ Принтирай</button>
+<button id="accountingSavePdfBtn" type="button" onclick="accountingProtocolOutput('save')" style="flex:1;min-width:140px">📄 Запази като PDF</button>
+</div>
 <div class="no-print" style="max-width:1050px;margin:10px auto;padding:10px 12px;background:#eef4f8;border:1px solid #cbd8e4;border-radius:9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label for="protocolTypeSelect" style="font-weight:bold">Вид протокол:</label><select id="protocolTypeSelect" onchange="changeProtocolType(this.value)" style="padding:10px;border:1px solid #9aabba;border-radius:7px;font-size:16px;flex:1;min-width:220px"><option value="measurement" data-bg="Газов протокол (измерване)" data-en="Gas protocol (measurement)">Газов протокол (измерване)</option><option value="removal" data-bg="Протокол за демонтаж" data-en="Removal protocol">Протокол за демонтаж</option><option value="installation" data-bg="Протокол за монтаж" data-en="Installation protocol">Протокол за монтаж</option></select></div>
 <div class="actions no-print" id="zoomControls" style="position:fixed;top:72px;right:12px;z-index:9998;display:flex;justify-content:center;align-items:center;gap:6px;margin:0;padding:3px;width:44px;min-height:44px;box-sizing:border-box;background:#fff;border:2px solid #123b60;border-radius:50%;box-shadow:0 3px 12px #0003">
   <button type="button" id="zoomDragHandle" onclick="toggleZoomControls()" aria-label="Покажи или скрий бутоните за увеличение" aria-expanded="false" title="Натисни за бутоните; плъзни за преместване" style="display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;color:#123b60;background:transparent;border:0;padding:4px;min-width:34px;min-height:34px;cursor:move;touch-action:none;user-select:none">🔍</button>
@@ -1748,6 +1752,17 @@ function renderInvoicingList(){
   else if(action==='delete')await removeFromInvoicing(pno);
  };
 }
+async function accountingProtocolOutput(action){
+ const printBtn=$('accountingPrintBtn'),saveBtn=$('accountingSavePdfBtn');
+ const active=action==='print'?printBtn:saveBtn;
+ if(active.disabled)return;
+ active.disabled=true;const original=active.textContent;active.textContent='Подготовка на PDF…';
+ try{
+  await openPdfViewer();
+  if(!currentPdfBlob)return;
+  if(action==='print')printCurrentPdf();else await downloadCurrentPdf();
+ }finally{active.disabled=false;active.textContent=original;}
+}
 async function openInvoiceProtocol(pno,outputAction=null){
  if(!['admin','accounting','accountant','счетоводство','счетоводител','счетоводители'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Нямате достъп до протоколите за фактуриране.');return;}
  const {data,error}=await sb.from('protocols').select('*').eq('company_id',currentCompanyId).eq('pno',pno).maybeSingle();
@@ -1767,7 +1782,8 @@ async function openInvoiceProtocol(pno,outputAction=null){
  if(currentUserRole==='accounting'){
   $('protocolMain').querySelectorAll('input,textarea').forEach(el=>el.readOnly=true);
   $('protocolMain').querySelectorAll('select').forEach(el=>el.disabled=true);
-  $('protocolMain').querySelectorAll('button').forEach((btn,index)=>{if(index!==0)btn.style.display='none';});
+  $('protocolMain').querySelectorAll('button').forEach(btn=>{if(!['accountingPrintBtn','accountingSavePdfBtn'].includes(btn.id)&&!btn.closest('#accountingPdfActions')&&btn!==$('protocolMain').querySelector('button'))btn.style.display='none';});
+  $('accountingPdfActions').style.display='flex';
   $('protocolMain').querySelectorAll('.actions').forEach(el=>el.style.display='none');
  }
 }
