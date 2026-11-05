@@ -23,15 +23,15 @@ window.supabase = {
 `;
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/supabase-js@2', route =>
+  await page.route('**/*supabase*', route =>
     route.fulfill({ status: 200, contentType: 'application/javascript', body: supabaseStub })
   );
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 15000 });
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
   // These tests exercise the protocol UI with a mocked Supabase client.
   // The current app intentionally requires sign-in, so hide the sign-in gate
   // for protocol-only tests instead of clicking a removed "offline mode" button.
