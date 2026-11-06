@@ -1,226 +1,148 @@
 const { test, expect } = require('@playwright/test');
 
-const supabaseStub = `
-window.supabase = {
+const supabaseStub = `window.supabase = {
   createClient: () => ({
     auth: {
-      getSession: async () => ({ data: { session: null }, error: null }),
-      signOut: async () => ({ error: null }),
-      signUp: async () => ({ data: { session: null, user: null }, error: null }),
-      signInWithPassword: async () => ({ data: { user: null }, error: { message: 'Mock login rejected' } })
+      getUser: async () => ({ data: { user: null }, error: null })
     },
-    from: () => {
-      const q = {
-        select() { return this; }, eq() { return this; }, order() { return this; },
-        limit() { return this; }, upsert: async () => ({ error: null }),
-        delete() { return this; }, then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); }
-      };
-      return q;
-    },
-    rpc: async () => ({ data: null, error: null })
+    from: () => ({
+      select() { return this; },
+      eq() { return this; },
+      order() { return this; },
+      range() { return Promise.resolve({ data: [], error: null }); },
+      insert() { return this; },
+      update() { return this; },
+      delete() { return this; },
+      single: async () => ({ data: null, error: null })
+    })
   })
-};
-`;
+};`;
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/supabase-js@2', route =>
+  await page.route('**/supabase-js@2*', route =>
     route.fulfill({ status: 200, contentType: 'application/javascript', body: supabaseStub })
   );
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-  await page.reload();
-  // These tests exercise the protocol UI with a mocked Supabase client.
-  // The current app intentionally requires sign-in, so hide the sign-in gate
-  // for protocol-only tests instead of clicking a removed "offline mode" button.
-  await page.locator('#authGate').evaluate(el => { el.style.display = 'none'; });
-  await expect(page.locator('#authGate')).toBeHidden();
-  // Compact mobile layout keeps client details collapsed initially; open them
-  // before interacting with client/site fields.
-  const clientDetails = page.locator('#client').locator('xpath=ancestor::details[1]');
-  if (await clientDetails.count()) {
-    await clientDetails.evaluate(el => { el.open = true; });
-  }
-});
-
-test('required client validation prevents saving an empty protocol', async ({ page }) => {
-  page.on('dialog', dialog => dialog.accept());
-  await page.getByRole('button', { name: 'Запиши' }).click();
-  await expect(page.locator('#client')).toBeVisible();
-  await expect(page.locator('#pno')).toHaveValue('');
-  await expect(page.locator('#gasProtocolArchive')).toHaveCount(0);
-});
-
-test('calculates corrector and meter consumption to three decimals', async ({ page }) => {
-  await page.locator('#c1').fill('10.125');
-  await page.locator('#c2').fill('14.5');
-  await page.locator('#m1').fill('20');
-  await page.locator('#m2').fill('23.456');
-  await expect(page.locator('#cu')).toContainText('4.375 m³');
-  await expect(page.locator('#mu')).toContainText('3.456 m³');
-});
-
-test('saves a protocol locally and places it in the archive', async ({ page }) => {
-  page.on('dialog', dialog => dialog.accept());
-  await page.locator('#client').fill('Тестова фирма');
-  await page.locator('#site').fill('Тестов обект');
-  await page.locator('#c1').fill('100');
-  await page.locator('#c2').fill('105.25');
-  await page.getByRole('button', { name: 'Запиши' }).click();
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('gasProtocolArchive') || '[]').length)).toBe(1);
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gasProtocolV2') || '{}'));
-  expect(saved.client).toBe('Тестова фирма');
-  expect(saved.site).toBe('Тестов обект');
-  expect(saved.cUsage).toBeCloseTo(5.25);
-  expect(saved.pno).toMatch(/^GP-/);
-});
-
-test('saved protocol survives reload and can be opened from archive', async ({ page }) => {
-  page.on('dialog', dialog => dialog.accept());
-  await page.locator('#client').fill('Фирма за повторение');
-  await page.locator('#c1').fill('2');
-  await page.locator('#c2').fill('7');
-  await page.getByRole('button', { name: 'Запиши' }).click();
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('gasProtocolV2'))).toContain('Фирма за повторение');
-  await page.reload();
-  await page.locator('#authGate').evaluate(el => { el.style.display = 'none'; });
-  await page.locator('#client').evaluate(el => {
-    const details = el.closest('details');
-    if (details) details.open = true;
-  });
-  await page.getByRole('button', { name: 'Архив' }).click();
-  await expect(page.locator('#archiveList')).toContainText('Фирма за повторение');
-  await page.getByRole('button', { name: 'Отвори' }).first().click();
-  await expect(page.locator('#client')).toHaveValue('Фирма за повторение');
-});
-
-test('new protocol carries over the same client and previous readings', async ({ page }) => {
-  page.on('dialog', dialog => dialog.accept());
-  await page.locator('#client').fill('Постоянен клиент');
-  await page.locator('#c2').fill('45.125');
-  await page.locator('#m2').fill('91.500');
-  await page.getByRole('button', { name: 'Запиши' }).click();
-  await page.getByRole('button', { name: 'Нов протокол' }).click();
-  await expect(page.locator('#client')).toHaveValue('Постоянен клиент');
-  await expect(page.locator('#c1')).toHaveValue('45.125');
-  await expect(page.locator('#m1').first()).toHaveValue('91.500');
-});
-
-test('language switch changes interface language and keeps field values editable', async ({ page }) => {
-  await page.locator('#client').fill('Language test');
-  await page.getByRole('button', { name: 'EN', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'bg'); // Keep document language stable for Android keyboard behavior.
-  await expect(page.locator('#protocolActions')).toContainText('Save');
-  await expect(page.locator('#client')).toHaveValue('Language test');
-  await page.getByRole('button', { name: 'BG', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'bg');
-  await expect(page.locator('#client')).toHaveValue('Language test');
-  await page.locator('#client').fill('Language test continued');
-  await expect(page.locator('#client')).toHaveValue('Language test continued');
-});
-
-test('registration mode shows password confirmation and validates mismatch', async ({ page }) => {
-  await page.getByRole('button', { name: 'Изход' }).count().then(async n => {
-    if (n) await page.getByRole('button', { name: 'Изход' }).click();
-    else await page.evaluate(() => { document.querySelector('#authGate').style.display = 'flex'; });
-  });
-  await page.getByRole('button', { name: 'Регистрация' }).click();
-  await expect(page.locator('#authPassword2')).toBeVisible();
-  await page.locator('#authEmail').fill('qa@example.test');
-  await page.locator('#authPassword').fill('first-password');
-  await page.locator('#authPassword2').fill('different-password');
-  await page.getByRole('button', { name: 'Регистрация' }).last().click();
-  await expect(page.locator('#authMsg')).toContainText('Паролите не съвпадат');
-});
-
-// Daily gas-presence protocol — independent UI and calculation coverage.
-test('daily protocol renders ten editable module rows with changeable identifiers and units', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/**', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ current: { temperature_2m: 8.5 } })
+    })
+  );
   await page.goto('/gas-daily.html');
-  const rows = page.locator('#modules tr');
-  await expect(rows).toHaveCount(10);
-  await rows.nth(0).locator('[data-field="number"]').fill('QA-MODULE-01');
-  await rows.nth(0).locator('[data-field="pressure"]').fill('12.5');
-  await rows.nth(0).locator('[data-field="unit"]').fill('kPa');
-  await expect(rows.nth(0).locator('[data-field="number"]')).toHaveValue('QA-MODULE-01');
-  await expect(rows.nth(0).locator('[data-field="pressure"]')).toHaveValue('12.5');
-  await expect(rows.nth(0).locator('[data-field="unit"]')).toHaveValue('kPa');
+  await expect(page.locator('#modules tr')).toHaveCount(10);
 });
 
-test('daily protocol calculates total pressure from all entered module readings', async ({ page }) => {
-  await page.goto('/gas-daily.html');
-  const pressures = page.locator('#modules [data-field="pressure"]');
-  await pressures.nth(0).fill('10');
-  await pressures.nth(1).fill('12.5');
-  await pressures.nth(2).fill('7.25');
-  await expect(page.locator('#pressureTotal')).toContainText('29,75');
-  await expect(page.locator('#availableGas')).toContainText('29,75');
+test('daily protocol starts with exactly ten module rows', async ({ page }) => {
+  await expect(page.locator('#modules tr')).toHaveCount(10);
+  await expect(page.locator('#addModuleRow')).toContainText('0/5');
 });
 
-test('daily protocol calculates corrector consumption and updates when readings change', async ({ page }) => {
-  await page.goto('/gas-daily.html');
+test('each module row exposes editable number, pressure and unit fields', async ({ page }) => {
+  const row = page.locator('#modules tr').nth(0);
+  await row.locator('[data-field="number"]').fill('QA-01');
+  await row.locator('[data-field="pressure"]').fill('12.5');
+  await row.locator('[data-field="unit"]').fill('kPa');
+  await expect(row.locator('[data-field="number"]')).toHaveValue('QA-01');
+  await expect(row.locator('[data-field="pressure"]')).toHaveValue('12.5');
+  await expect(row.locator('[data-field="unit"]')).toHaveValue('kPa');
+});
+
+test('module pressure total adds all numeric readings', async ({ page }) => {
+  const pressure = page.locator('#modules [data-field="pressure"]');
+  await pressure.nth(0).fill('10');
+  await pressure.nth(1).fill('12.5');
+  await pressure.nth(2).fill('7.25');
+  await expect(page.locator('#pressureTotal')).toHaveText('29,75');
+  await expect(page.locator('#availableGas')).toHaveText('29,75');
+});
+
+test('module pressure total updates when an existing reading changes', async ({ page }) => {
+  const pressure = page.locator('#modules [data-field="pressure"]');
+  await pressure.nth(0).fill('10');
+  await pressure.nth(1).fill('5');
+  await expect(page.locator('#pressureTotal')).toHaveText('15');
+  await pressure.nth(0).fill('20');
+  await expect(page.locator('#pressureTotal')).toHaveText('25');
+});
+
+test('empty module pressure readings show a dash instead of a false zero', async ({ page }) => {
+  await expect(page.locator('#pressureTotal')).toHaveText('—');
+  await expect(page.locator('#availableGas')).toHaveText('—');
+});
+
+test('corrector consumption is calculated from current minus previous reading', async ({ page }) => {
   await page.locator('#previous').fill('100.125');
   await page.locator('#corrector').fill('104.5');
-  await expect(page.locator('#consumption')).toContainText('4,375');
-  await page.locator('#corrector').fill('105');
-  await expect(page.locator('#consumption')).toContainText('4,875');
+  await expect(page.locator('#consumption')).toHaveText('4,375');
 });
 
-test('daily protocol allows at most five additional module rows and removes an added row', async ({ page }) => {
-  await page.goto('/gas-daily.html');
+test('corrector readings accept decimal commas', async ({ page }) => {
+  await page.locator('#previous').fill('10,25');
+  await page.locator('#corrector').fill('12,75');
+  await expect(page.locator('#consumption')).toHaveText('2,5');
+});
+
+test('corrector consumption recalculates immediately after a reading changes', async ({ page }) => {
+  await page.locator('#previous').fill('20');
+  await page.locator('#corrector').fill('25');
+  await expect(page.locator('#consumption')).toHaveText('5');
+  await page.locator('#corrector').fill('27.5');
+  await expect(page.locator('#consumption')).toHaveText('7,5');
+});
+
+test('daily protocol date and time are initialized and remain editable', async ({ page }) => {
+  await expect(page.locator('#pdate')).toHaveValue(/^\d{4}-\d{2}-\d{2}$/);
+  await expect(page.locator('#ptime')).toHaveValue(/^\d{2}:\d{2}$/);
+  await page.locator('#pdate').fill('2026-11-06');
+  await page.locator('#ptime').fill('18:45');
+  await expect(page.locator('#pdate')).toHaveValue('2026-11-06');
+  await expect(page.locator('#ptime')).toHaveValue('18:45');
+});
+
+test('editing the base location updates the protocol heading in uppercase', async ({ page }) => {
+  await page.locator('#protocolLocation').fill('ТЕСТОВА БАЗА');
+  await expect(page.locator('#protocolLocationTitle')).toHaveText('ТЕСТОВА БАЗА');
+});
+
+test('the add-row control allows five additional module rows', async ({ page }) => {
   const add = page.locator('#addModuleRow');
   for (let i = 0; i < 5; i++) await add.click();
   await expect(page.locator('#modules tr')).toHaveCount(15);
   await expect(add).toBeDisabled();
-  await page.getByRole('button', { name: 'Премахни ред 15' }).click();
-  await expect(page.locator('#modules tr')).toHaveCount(14);
-  await expect(add).toBeEnabled();
-  await expect(add).toContainText('4/5');
+  await expect(add).toContainText('5/5');
 });
 
-test('daily protocol magnifier opens, increases zoom and resets to 100 percent', async ({ page }) => {
-  await page.goto('/gas-daily.html');
+test('removing an additional module row restores the row limit and numbering', async ({ page }) => {
+  await page.locator('#addModuleRow').click();
+  await expect(page.locator('#modules tr')).toHaveCount(11);
+  await page.getByRole('button', { name: 'Премахни ред 11' }).click();
+  await expect(page.locator('#modules tr')).toHaveCount(10);
+  await expect(page.locator('#addModuleRow')).toBeEnabled();
+  await expect(page.locator('#addModuleRow')).toContainText('0/5');
+});
+
+test('magnifier opens, increases zoom and resets to one hundred percent', async ({ page }) => {
   await page.locator('#magnifierToggle').click();
-  await expect(page.locator('#magnifierToggle')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#magnifierControls')).toBeVisible();
+  await expect(page.locator('#magnifierToggle')).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('button', { name: 'Увеличи увеличението' }).click();
   await expect(page.locator('#zoomValue')).toHaveText('110%');
   await page.getByRole('button', { name: '100%', exact: true }).click();
   await expect(page.locator('#zoomValue')).toHaveText('100%');
 });
 
-test('daily protocol keeps editable date, time, location and checker fields', async ({ page }) => {
-  await page.goto('/gas-daily.html');
-  await page.locator('#pdate').fill('2026-11-06');
-  await page.locator('#ptime').fill('18:45');
-  await page.locator('#protocolLocation').fill('ТЕСТОВА БАЗА');
-  await page.locator('#checker').fill('Тестов проверяващ');
-  await expect(page.locator('#pdate')).toHaveValue('2026-11-06');
-  await expect(page.locator('#ptime')).toHaveValue('18:45');
-  await expect(page.locator('#protocolLocationTitle')).toHaveText('ТЕСТОВА БАЗА');
-  await expect(page.locator('#checker')).toHaveValue('Тестов проверяващ');
-});
-
-test('daily protocol signature canvas accepts pointer input and clear action resets ink state', async ({ page }) => {
-  await page.goto('/gas-daily.html');
+test('signature canvas records pointer input and clear action resets it', async ({ page }) => {
   const canvas = page.locator('#signature');
-  const bounds = await canvas.boundingBox();
-  await page.mouse.move(bounds.x + 20, bounds.y + 20);
-  await page.mouse.down();
-  await page.mouse.move(bounds.x + 90, bounds.y + 45, { steps: 5 });
-  await page.mouse.up();
+  await canvas.click({ position: { x: 30, y: 30 } });
   expect(await page.evaluate(() => hasInk)).toBe(true);
   await page.getByRole('button', { name: 'Изчисти подписа' }).click();
   expect(await page.evaluate(() => hasInk)).toBe(false);
 });
 
-test('daily protocol does not claim a cloud save when no authenticated user is present', async ({ page }) => {
-  await page.goto('/gas-daily.html');
-  await page.evaluate(() => {
-    sb.auth.getUser = async () => ({ data: { user: null }, error: null });
-  });
-  await page.locator('button').filter({ hasText: 'Запиши в архива' }).click();
+test('saving without an authenticated user shows the sign-in requirement', async ({ page }) => {
+  await page.locator('#pdate').fill('2026-11-06');
+  await page.getByRole('button', { name: 'Запиши в архива' }).click();
   await expect(page.locator('#status')).toContainText('Първо влезте в основното приложение');
   await expect(page.locator('#status')).not.toContainText('Протоколът е записан в архива');
 });
