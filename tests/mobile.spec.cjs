@@ -36,6 +36,11 @@ test.describe('responsive protocol layout', () => {
       sessionStorage.clear();
       const gate = document.querySelector('#authGate');
       if (gate) gate.style.display = 'none';
+      // Enter the protocol through the same section-opening function used by the UI.
+      window.openProtocolSection();
+      // The compact mobile layout collapses client details by default.
+      const details = document.querySelector('#client')?.closest('details');
+      if (details) details.open = true;
     });
   });
 
