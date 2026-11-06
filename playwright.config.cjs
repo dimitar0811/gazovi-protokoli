@@ -4,7 +4,7 @@ module.exports = defineConfig({
   testDir: './tests',
   // Run the core daily-protocol suite and the dedicated mobile viewport suite.
   // The legacy functional suite remains excluded until its bootstrap hang is fixed.
-  testMatch: ['**/gas-daily.spec.cjs', '**/mobile.spec.cjs'],
+  testMatch: ['**/gas-daily.spec.cjs', '**/mobile.spec.cjs', '**/archive-pdf.spec.cjs'],
   fullyParallel: true,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
