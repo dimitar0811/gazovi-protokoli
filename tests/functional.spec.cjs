@@ -40,7 +40,9 @@ test.beforeEach(async ({ page }) => {
   // Compact mobile layout keeps client details collapsed initially; open them
   // before interacting with client/site fields.
   const clientDetails = page.locator('#client').locator('xpath=ancestor::details[1]');
-  if (await clientDetails.count()) await clientDetails.locator('summary').click();
+  if (await clientDetails.count()) {
+    await clientDetails.evaluate(el => { el.open = true; });
+  }
 });
 
 test('required client validation prevents saving an empty protocol', async ({ page }) => {
