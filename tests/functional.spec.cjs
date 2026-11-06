@@ -216,7 +216,7 @@ test('daily protocol signature canvas accepts pointer input and clear action res
 test('daily protocol does not claim a cloud save when no authenticated user is present', async ({ page }) => {
   await page.goto('/gas-daily.html');
   await page.evaluate(() => {
-    window.supabase = { createClient: () => ({ auth: { getUser: async () => ({ data: { user: null }, error: null }) } }) };
+    sb.auth.getUser = async () => ({ data: { user: null }, error: null });
   });
   await page.locator('button').filter({ hasText: 'Запиши в архива' }).click();
   await expect(page.locator('#status')).toContainText('Първо влезте в основното приложение');
