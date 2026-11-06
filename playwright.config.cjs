@@ -2,9 +2,9 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  // Keep CI focused on the gas daily protocol suite. The legacy functional
-  // suite has a separate page bootstrap that currently hangs before tests run.
-  testMatch: '**/gas-daily.spec.cjs',
+  // Run the core daily-protocol suite and the dedicated mobile viewport suite.
+  // The legacy functional suite remains excluded until its bootstrap hang is fixed.
+  testMatch: ['**/gas-daily.spec.cjs', '**/mobile.spec.cjs'],
   fullyParallel: true,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
