@@ -53,6 +53,9 @@ test('protocol archive survives reload and can reopen the saved record', async (
   });
   await page.locator('#protocolActions button[onclick="openArchive()"]').click();
   await expect(page.locator('#archiveModal')).toBeVisible();
+  // Archive entries are nested inside collapsed location and date folders.
+  await page.locator('#archiveList .archive-folder').filter({ hasText: 'Други / неуточнено' }).locator('summary').first().click();
+  await page.locator('#archiveList .archive-date-folder').locator('summary').first().click();
   await page.locator('#archiveList .archive-item').filter({ hasText: 'TEST-ARCHIVE-001' }).getByRole('button', { name: 'Отвори' }).click();
 
   await expect(page.locator('#client')).toHaveValue('QA Archive Fixture');
