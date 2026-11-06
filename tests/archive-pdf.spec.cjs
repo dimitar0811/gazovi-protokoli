@@ -21,6 +21,7 @@ test.beforeEach(async ({ page }) => {
       })
     };`
   }));
+  await page.addInitScript(() => { window.alert = () => {}; window.confirm = () => true; });
   await page.goto('/');
   await page.evaluate(() => {
     localStorage.clear();
@@ -43,10 +44,11 @@ test('protocol archive survives reload and can reopen the saved record', async (
   expect(beforeReload[0].pno).toBe('TEST-ARCHIVE-001');
   expect(beforeReload[0].client).toBe('QA Archive Fixture');
 
-  page.once('dialog', dialog => dialog.accept());
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.openArchived === 'function' && typeof window.openProtocolSection === 'function');
   await page.evaluate(() => {
-    document.querySelector('#authGate').style.display = 'none';
+    const gate = document.querySelector('#authGate');
+    if (gate) gate.style.display = 'none';
     window.openProtocolSection();
     window.openArchived(0);
   });
