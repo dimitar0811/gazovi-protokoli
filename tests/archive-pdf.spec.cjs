@@ -45,13 +45,15 @@ test('protocol archive survives reload and can reopen the saved record', async (
   expect(beforeReload[0].client).toBe('QA Archive Fixture');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => typeof window.openArchived === 'function' && typeof window.openProtocolSection === 'function');
+  await page.waitForFunction(() => typeof window.openProtocolSection === 'function');
   await page.evaluate(() => {
     const gate = document.querySelector('#authGate');
     if (gate) gate.style.display = 'none';
     window.openProtocolSection();
-    window.openArchived(0);
   });
+  await page.locator('#protocolActions button[onclick="openArchive()"]').click();
+  await expect(page.locator('#archiveModal')).toBeVisible();
+  await page.locator('#archiveList .archive-item').filter({ hasText: 'TEST-ARCHIVE-001' }).getByRole('button', { name: 'Отвори' }).click();
 
   await expect(page.locator('#client')).toHaveValue('QA Archive Fixture');
   await expect(page.locator('#pno')).toHaveValue('TEST-ARCHIVE-001');
