@@ -11,9 +11,9 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure'
   },
   projects: [
-    { name: 'desktop-chrome', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'tablet', use: { ...devices['iPad (gen 7)'] } },
-    { name: 'mobile', use: { ...devices['iPhone 13'] } }
+    { name: 'desktop-chrome', use: { ...devices['Desktop Chrome'], browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
+    { name: 'tablet', use: { ...devices['iPad (gen 7)'], browserName: 'chromium' } },
+    { name: 'mobile', use: { ...devices['iPhone 13'], browserName: 'chromium' } }
   ],
   webServer: {
     command: 'node tests/server.cjs',
