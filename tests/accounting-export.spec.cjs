@@ -48,6 +48,24 @@ test('XML export starts a download for the selected protocol', async ({ page }) 
   await expect(page.locator('#status')).toContainText('XML експорт за 1 протокола');
 });
 
+
+test('CSV export starts a download for the selected protocol', async ({ page }) => {
+  await page.locator('#list input[type=checkbox]').check();
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#csvBtn').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\\.csv$/);
+  await expect(page.locator('#status')).toContainText('CSV експорт за 1 протокола');
+});
+
+test('XML content escapes special characters and does not invent financial fields', async ({ page }) => {
+  const xml = await page.evaluate(() => makeXml({ pno: 'GP-TEST', date: '2026-11-14', client: 'A & B', notes: '<test>' }));
+  expect(xml).toContain('A &amp; B');
+  expect(xml).toContain('&lt;test&gt;');
+  expect(xml).not.toContain('VAT');
+  expect(xml).not.toContain('Price');
+});
+
 test('search filters protocol rows', async ({ page }) => {
   await page.locator('#search').fill('няма такъв клиент');
   await expect(page.locator('#list')).toContainText('Няма протоколи');
