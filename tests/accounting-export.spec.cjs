@@ -4,7 +4,7 @@ const records = [
   { pno: 'MON-20261114-001', date: '2026-11-14', client: 'Тест Клиент', eik: '123456789', site: 'Чепеларе', tech: 'Иван', cbm: 'C-1', cs: '100', cd: '2026-11-14', c1: '10', c2: '12', cv: '2', mbm: 'M-1', ms: '200', md: '2026-11-14', m1: '20', m2: '22', mv: '2', notes: 'Тест & проверка', accounting_status: 'pending' }
 ];
 
-const supabaseStub = `window.supabase = {
+const supabaseStub = `const records = [{"pno":"MON-20261114-001","date":"2026-11-14","client":"Тест Клиент","eik":"123456789","site":"Чепеларе","tech":"Иван","cbm":"C-1","cs":"100","cd":"2026-11-14","c1":"10","c2":"12","cv":"2","mbm":"M-1","ms":"200","md":"2026-11-14","m1":"20","m2":"22","mv":"2","notes":"Тест & проверка","accounting_status":"pending"}];\nwindow.supabase = {
   createClient: () => ({
     auth: { getUser: async () => ({ data: { user: { id: 'user-1', email: 'accounting@example.test' } }, error: null }) },
     rpc: async name => name === 'check_app_access'
