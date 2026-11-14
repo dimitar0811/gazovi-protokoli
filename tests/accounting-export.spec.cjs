@@ -58,6 +58,18 @@ test('CSV export starts a download for the selected protocol', async ({ page }) 
   await expect(page.locator('#status')).toContainText('CSV експорт за 1 протокола');
 });
 
+test('CSV export neutralizes spreadsheet formula prefixes', async ({ page }) => {
+  const csv = await page.evaluate(() => {
+    const cell = (v)=>{let value=String(v??'');if(/^[\\s]*[=+@-]/.test(value)||/^[\\t\\r]/.test(value))value="'"+value;return '"'+value.replace(/"/g,'""')+'"';};
+    return ['=1+1', '+SUM(A1:A2)', '-2+3', '@SUM(A1:A2)', 'ordinary text'].map(cell).join(',');
+  });
+  expect(csv).toContain("\"'=1+1\"");
+  expect(csv).toContain("\"'+SUM(A1:A2)\"");
+  expect(csv).toContain("\"'-2+3\"");
+  expect(csv).toContain("\"'@SUM(A1:A2)\"");
+  expect(csv).toContain('\"ordinary text\"');
+});
+
 test('XML content escapes special characters and does not invent financial fields', async ({ page }) => {
   const xml = await page.evaluate(() => makeXml({ pno: 'GP-TEST', date: '2026-11-14', client: 'A & B', notes: '<test>' }));
   expect(xml).toContain('A &amp; B');
