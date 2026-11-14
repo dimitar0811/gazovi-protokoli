@@ -13,6 +13,7 @@ const supabaseStub = `const records = [{"pno":"MON-20261114-001","date":"2026-11
     from: () => ({
       select() { return this; },
       eq() { return this; },
+      not() { return this; },
       order() { return this; },
       then(resolve) { resolve({ data: records, error: null }); }
     })
