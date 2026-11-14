@@ -29,7 +29,10 @@ jobs:
       - name: Verify application entry point and inline JavaScript syntax
         run: |
           test -f index.html
+          test -f accounting-export.html
           grep -qi '<!doctype html' index.html
+          grep -qi '<!doctype html' accounting-export.html
+          grep -q 'GasProtocolsExport' accounting-export.html
           grep -q 'function setLang' index.html
           grep -q 'function save()' index.html
           grep -q 'function load()' index.html
