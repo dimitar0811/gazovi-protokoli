@@ -54,7 +54,7 @@ test('CSV export starts a download for the selected protocol', async ({ page }) 
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#csvBtn').click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/\\.csv$/);
+  expect(download.suggestedFilename()).toMatch(/\.csv$/);
   await expect(page.locator('#status')).toContainText('CSV експорт за 1 протокола');
 });
 
