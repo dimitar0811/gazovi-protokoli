@@ -674,6 +674,7 @@ details.compact-details[open]>summary:before{content:"−"}
     <button id="homeProtocolBtn" type="button" onclick="openProtocolSection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">1. Протоколи за изразходване на газ</button>
     <button id="homeDailyBtn" type="button" onclick="openDailySection()" style="display:block;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">2. Дневни протоколи</button>
     <button id="homeInvoicingBtn" type="button" onclick="openInvoicingSection()" style="display:none;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">3. Протоколи за фактуриране</button>
+    <button id="homeAccountingExportBtn" type="button" onclick="openAccountingExportSection()" style="display:none;width:100%;padding:20px 14px;margin:12px 0;font-size:18px;white-space:normal">4. Счетоводен експорт</button>
   </div>
 </div>
 <div id="userBar" class="user-bar" style="display:none">
@@ -911,7 +912,12 @@ async function showHomeMenu(){
   $('homeProtocolBtn').style.display='block';
   $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
   $('homeInvoicingBtn').style.display=(isAccountingRole()||currentUserRole==='admin')?'block':'none';
+  $('homeAccountingExportBtn').style.display=(isAccountingRole()||currentUserRole==='admin')?'block':'none';
   $('homeMenu').style.display='block';
+}
+function openAccountingExportSection(){
+  if(!['admin','accounting','accountant','счетоводство','счетоводител'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Нямате достъп до счетоводния експорт.');return;}
+  location.href='accounting-export.html';
 }
 function openInvoicingSection(){
   if(!['admin','accounting','accountant','счетоводство','счетоводител'].includes(String(currentUserRole||'').trim().toLowerCase())){alert('Нямате достъп до протоколите за фактуриране.');return;}
@@ -958,6 +964,7 @@ async function onSignedIn(user){
   $('adminAccessBtn').style.display=currentUserRole==='admin'?'inline-block':'none';
   $('invoicingListBtn').style.display='none';
   $('homeInvoicingBtn').style.display=(currentUserRole==='admin'||isAccountingRole())?'block':'none';
+  $('homeAccountingExportBtn').style.display=(currentUserRole==='admin'||isAccountingRole())?'block':'none';
   $('homeProtocolBtn').style.display=isAccountingRole()?'none':'block';
   $('homeDailyBtn').style.display=isAccountingRole()?'none':'block';
   const shareButton=$('userBar').querySelector('button[onclick="shareApp()"]');
