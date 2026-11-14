@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b60">
+<title>Счетоводен експорт — Газови протоколи</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef3f8;color:#1d2935;font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1050px;margin:0 auto;padding:16px}.top,.panel{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px #123b6010}.top{background:#123b60;color:#fff}.top h1{margin:0 0 5px;font-size:23px}.top p{margin:0;color:#dce9f5}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}button,.btn{border:0;border-radius:9px;padding:11px 14px;background:#174d78;color:white;font:inherit;font-weight:650;cursor:pointer}button.secondary{background:#e8eff5;color:#183b58}button:disabled{opacity:.45;cursor:not-allowed}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.filters label{font-weight:650;font-size:13px;color:#536577}.filters input,.filters select{display:block;width:100%;margin-top:5px;padding:11px;border:1px solid #cbd6e0;border-radius:8px;font:inherit;background:white}.hint{background:#fff8e7;border:1px solid #f0d99c;border-radius:10px;padding:12px;color:#654d16;margin-bottom:14px}.summary{font-weight:700;color:#244b6b;margin:10px 0}.item{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:13px 0;border-top:1px solid #e6edf3}.item input{width:19px;height:19px;margin-top:4px}.item h3{margin:0;font-size:16px}.muted{color:#647586;font-size:13px}.tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#edf3f8;color:#36566f;font-size:12px}.empty{padding:24px;text-align:center;color:#66798a}.bottom{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.bottom button{flex:1;min-width:180px}.status{white-space:pre-wrap;margin-top:12px;color:#245b38;font-weight:600}a{color:inherit}@media(max-width:560px){main{padding:10px}.top,.panel{padding:14px}.item{grid-template-columns:26px 1fr}.item .tag{grid-column:2;justify-self:start}}
+</style>
+</head>
+<body><main>
+<section class="top">
+<h1>Счетоводен експорт</h1>
+<p>Подготовка на данни от газовите протоколи за бъдеща връзка със счетоводна програма</p>
+<div class="toolbar"><button class="secondary" type="button" onclick="location.href='index.html'">← Назад към газовите протоколи</button><button class="secondary" type="button" onclick="loadProtocols()">Обнови списъка</button></div>
+</section>
+<div class="hint"><b>Важно:</b> Това е подготвителен експорт, а не издадена фактура. В наличните протоколи няма надеждно въведени цени, данъчна основа и ДДС, затова те няма да бъдат измисляни или добавяни. XML форматът е неутрален и ще се адаптира към избраната счетоводна програма.</div>
+<section class="panel">
+<div class="filters">
+<label>Търсене по клиент, ЕИК или номер<input id="search" type="search" placeholder="Например клиент или GP-..." oninput="render()"></label>
+<label>От дата<input id="from" type="date" onchange="render()"></label>
+<label>До дата<input id="to" type="date" onchange="render()"></label>
+<label>Тип протокол<select id="type" onchange="render()"><option value="">Всички</option><option value="measurement">Отчитане</option><option value="installation">Монтаж</option><option value="removal">Демонтаж</option></select></label>
+</div>
+<div id="summary" class="summary">Зареждане…</div>
+<div class="toolbar"><button class="secondary" type="button" onclick="selectVisible(true)">Избери видимите</button><button class="secondary" type="button" onclick="selectVisible(false)">Изчисти избора</button></div>
+<div id="list"><div class="empty">Зареждане на протоколите…</div></div>
+</section>
+<section class="panel">
+<h2 style="margin:0 0 8px">Изтегляне</h2>
+<p class="muted">Избери един или повече протоколи. XML е основният неутрален формат; CSV е удобен за преглед в Excel.</p>
+<div class="bottom"><button type="button" id="xmlBtn" onclick="exportXml()" disabled>Изтегли XML</button><button type="button" id="csvBtn" onclick="exportCsv()" disabled>Изтегли CSV</button></div>
+<div id="status" class="status" role="status"></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://dryzqeychhxquhmieeuu.supabase.co';
+const SUPABASE_KEY='sb_publishable_HkUsXQ95F1m1UuBdjfvDJA_mXqTTMBl';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let rows=[],selected=new Set(),companyId='',currentUser=null;
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function isoDate(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:'';}
+function kind(p){const n=String(p.pno||p.protocol_number||'').toUpperCase();return n.startsWith('DEM-')?'removal':n.startsWith('MON-')?'installation':'measurement';}
+function kindLabel(v){return v==='removal'?'Демонтаж':v==='installation'?'Монтаж':'Отчитане';}
+function visibleRows(){const q=$('search').value.trim().toLocaleLowerCase('bg'),from=$('from').value,to=$('to').value,type=$('type').value;return rows.filter(p=>{const d=isoDate(p.date||p.protocol_date);const text=[p.pno,p.protocol_number,p.client,p.eik,p.site,p.contact].some(v=>String(v||'').toLocaleLowerCase('bg').includes(q));return text&&(!from||d>=from)&&(!to||d<=to)&&(!type||kind(p)===type);});}
+function render(){const filtered=visibleRows();$('summary').textContent='Заредени: '+rows.length+' · Показани: '+filtered.length+' · Избрани: '+selected.size;$('list').innerHTML=filtered.length?filtered.map(p=>{const id=String(p.pno||p.protocol_number||'');return '<label class="item"><input type="checkbox" '+(selected.has(id)?'checked':'')+' onchange="toggleOne(\''+esc(id).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\',this.checked)"><span><h3>'+esc(id||'Без номер')+' — '+esc(p.client||'Без клиент')+'</h3><span class="muted">Дата: '+esc(isoDate(p.date)||'—')+' · ЕИК: '+esc(p.eik||'—')+' · Обект: '+esc(p.site||'—')+'</span></span><span class="tag">'+kindLabel(kind(p))+'</span></label>';}).join(''):'<div class="empty">Няма протоколи, отговарящи на филтрите.</div>';$('xmlBtn').disabled=!selected.size;$('csvBtn').disabled=!selected.size;}
+function toggleOne(id,on){if(on)selected.add(id);else selected.delete(id);render();}
+function selectVisible(on){visibleRows().forEach(p=>{const id=String(p.pno||p.protocol_number||'');if(on)selected.add(id);else selected.delete(id);});render();}
+async function loadProtocols(){ $('list').innerHTML='<div class="empty">Зареждане…</div>';try{const {data:{user},error:authError}=await sb.auth.getUser();if(authError||!user)throw new Error('Няма активна сесия. Влезте от основното приложение и опитайте отново.');currentUser=user;const {data:access,error:accessError}=await sb.rpc('check_app_access');if(accessError||!access?.approved)throw new Error('Нямате одобрен достъп до приложението.');const role=String(access.role||'').trim().toLowerCase();if(!['admin','accounting','accountant','счетоводство','счетоводител'].includes(role))throw new Error('Счетоводният експорт е достъпен само за администратор или счетоводство.');companyId=localStorage.getItem('gasCompanyId')||'';if(!companyId){const code=(prompt('Въведете фирмения код за общия архив:','ЧЕП2026')||'').trim();if(!code)throw new Error('Не е избран фирмен архив.');const {data,error}=await sb.rpc('join_company_by_code',{p_code:code,p_user_id:user.id});if(error||!data)throw new Error(error?.message||'Неуспешно свързване с фирмения архив.');companyId=data;localStorage.setItem('gasCompanyId',data);localStorage.setItem('gasCompanyCode',code);}const {data,error}=await sb.from('protocols').select('*').eq('company_id',companyId).order('date',{ascending:false});if(error)throw error;rows=data||[];selected.clear();render();$('status').textContent='';}catch(e){$('list').innerHTML='<div class="empty">'+esc(e.message||'Грешка при зареждане.')+'</div>';$('summary').textContent='Неуспешно зареждане';$('status').textContent=e.message||'Грешка';$('xmlBtn').disabled=true;$('csvBtn').disabled=true;}}
+function chosen(){return rows.filter(p=>selected.has(String(p.pno||p.protocol_number||'')));}
+function xmlEscape(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+function xmlTag(name,value){return '<'+name+'>'+xmlEscape(value)+'</'+name+'>';}
+function makeXml(p){const id=p.pno||p.protocol_number||'';return '  <Protocol>\n'+['ProtocolNumber','ProtocolDate','ProtocolType','ClientName','ClientEIK','Site','Contact','Technician','Notes','CorrectorModel','CorrectorSerial','CorrectorCheckDate','CorrectorStartReading','CorrectorEndReading','CorrectorQuantity','MeterModel','MeterSerial','MeterCheckDate','MeterStartReading','MeterEndReading','MeterQuantity'].map((tag,i)=>xmlTag(tag,[id,p.date,kind(p),p.client,p.eik,p.site,p.contact,p.tech_name||p.tech,p.notes,p.cbm,p.cs,p.cd,p.c1,p.c2,p.cv,p.mbm,p.ms,p.md,p.m1,p.m2,p.mv][i])).join('\n')+'\n  </Protocol>';}
+function download(name,type,content){const blob=new Blob([content],{type:type+';charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+function exportXml(){const data=chosen();if(!data.length)return;const xml='<?xml version="1.0" encoding="UTF-8"?>\n<GasProtocolsExport schemaVersion="1.0" generatedAt="'+new Date().toISOString()+'">\n'+data.map(makeXml).join('\n')+'\n</GasProtocolsExport>';download('gazovi-protokoli-export.xml','application/xml',xml);$('status').textContent='Подготвен е XML експорт за '+data.length+' протокола. Това не е фактура и не съдържа измислени цени или ДДС.';}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
+function exportCsv(){const data=chosen(),cols=[['Номер','pno'],['Дата','date'],['Клиент','client'],['ЕИК','eik'],['Обект','site'],['Контакт','contact'],['Тип','type'],['Коректор модел','cbm'],['Коректор сериен номер','cs'],['Коректор начално показание','c1'],['Коректор крайно показание','c2'],['Коректор количество','cv'],['Разходомер модел','mbm'],['Разходомер сериен номер','ms'],['Разходомер начално показание','m1'],['Разходомер крайно показание','m2'],['Разходомер количество','mv'],['Забележки','notes']];const lines=[cols.map(c=>csvCell(c[0])).join(';'),...data.map(p=>cols.map(c=>csvCell(c[1]==='type'?kindLabel(kind(p)):p[c[1]]??p.protocol_number)).join(';'))];download('gazovi-protokoli-export.csv','text/csv','\uFEFF'+lines.join('\r\n'));$('status').textContent='Подготвен е CSV експорт за '+data.length+' протокола.';}
+loadProtocols();
+</script></body></html>
