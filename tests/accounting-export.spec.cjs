@@ -38,13 +38,13 @@ test('selecting a protocol enables XML and CSV exports', async ({ page }) => {
   await expect(page.locator('#csvBtn')).toBeEnabled();
 });
 
-test('XML export downloads protocol data with escaped XML characters', async ({ page }) => {
+test('XML export starts a download for the selected protocol', async ({ page }) => {
   await page.locator('#list input[type=checkbox]').check();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#xmlBtn').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.xml$/);
-  await expect(page.locator('#status')).toContainText('универсален XML експорт');
+  await expect(page.locator('#status')).toContainText('XML експорт за 1 протокола');
 });
 
 test('search filters protocol rows', async ({ page }) => {
