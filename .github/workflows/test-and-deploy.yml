@@ -3,6 +3,8 @@ name: Test and deploy static app
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -29,31 +31,37 @@ jobs:
       - name: Verify application entry point and inline JavaScript syntax
         run: |
           test -f index.html
+          test -f accounting-export.html
           grep -qi '<!doctype html' index.html
+          grep -qi '<!doctype html' accounting-export.html
+          grep -q 'GasProtocolsExport' accounting-export.html
           grep -q 'function setLang' index.html
           grep -q 'function save()' index.html
           grep -q 'function load()' index.html
           node <<'NODE'
           const fs = require('fs');
           const vm = require('vm');
-          const html = fs.readFileSync('index.html', 'utf8');
-          const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-            .map(match => match[1]).filter(source => source.trim());
-          if (!scripts.length) throw new Error('No inline JavaScript found');
-          scripts.forEach((source, i) => new vm.Script(source, { filename: `inline-script-${i + 1}.js` }));
-          console.log(`JavaScript syntax passed for ${scripts.length} inline script(s).`);
+          for (const file of ['index.html', 'accounting-export.html']) {
+            const html = fs.readFileSync(file, 'utf8');
+            const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
+              .map(match => match[1]).filter(source => source.trim());
+            if (!scripts.length) throw new Error(`No inline JavaScript found in ${file}`);
+            scripts.forEach((source, i) => new vm.Script(source, { filename: `${file}-inline-script-${i + 1}.js` }));
+            console.log(`JavaScript syntax passed for ${file} (${scripts.length} inline script(s)).`);
+          }
           NODE
 
       - name: Install test dependencies
         run: npm install
 
-      - name: Install Chromium and WebKit
-        run: npx playwright install --with-deps chromium webkit
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run browser functional tests
         run: npm test
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     environment:
